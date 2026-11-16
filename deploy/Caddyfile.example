@@ -1,5 +1,5 @@
 # Add to your Caddyfile, then: sudo systemctl reload caddy
-# Needs JT_PROXY_SECRET in Caddy's environment (deploy/SETUP.md, step 5).
+# Reads the proxy secret from /etc/caddy/jobtracker-proxy-secret (deploy/SETUP.md, step 5).
 jobtracker.thezdev.com {
 	# Never pass along a secret header a client tried to send itself.
 	request_header -X-Proxy-Secret
@@ -11,8 +11,8 @@ jobtracker.thezdev.com {
 		reverse_proxy 127.0.0.1:8300
 	}
 
-	# Everyone else signs in first. Use the same login your other sites use,
-	# e.g. import your existing auth snippet, or:
+	# Everyone else signs in first. Give this site its own login; don't import a
+	# snippet shared with other apps, or their users get in here too:
 	#   basic_auth {
 	#       michael <hash from: caddy hash-password>
 	#   }
@@ -20,7 +20,7 @@ jobtracker.thezdev.com {
 	handle {
 		# <your login directive here>
 		reverse_proxy 127.0.0.1:8300 {
-			header_up X-Proxy-Secret {env.JT_PROXY_SECRET}
+			header_up X-Proxy-Secret {file./etc/caddy/jobtracker-proxy-secret}
 		}
 	}
 

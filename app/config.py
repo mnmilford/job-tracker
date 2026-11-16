@@ -33,7 +33,7 @@ class Settings:
     db_path: str = field(default_factory=lambda: os.environ.get("DB_PATH", "data/tracker.db"))
     auth_mode: str = field(default_factory=lambda: os.environ.get("AUTH_MODE", "proxy"))
     api_tokens: dict = field(default_factory=lambda: _tokens(os.environ.get("API_TOKENS", "")))
-    proxy_secret: str = field(default_factory=lambda: os.environ.get("PROXY_SECRET", ""))
+    proxy_secret: str = field(default_factory=lambda: os.environ.get("PROXY_SECRET", "").strip())
     owner_name: str = field(default_factory=lambda: os.environ.get("OWNER_NAME", ""))
     docs_repo_url: str = field(default_factory=lambda: os.environ.get("DOCS_REPO_URL", "").rstrip("/"))
     docs_branch: str = field(default_factory=lambda: os.environ.get("DOCS_BRANCH", "main"))

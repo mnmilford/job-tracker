@@ -47,24 +47,21 @@ sudo systemctl enable --now job-tracker
 curl -s http://127.0.0.1:8300/healthz        # {"ok":true}
 ```
 
-Let the `jobtracker` user restart its own service (and read its logs) for deploys, and nothing else:
+Let the `jobtracker` user run exactly the two commands the deploy script needs, and nothing else. (No wildcards: a pattern like `journalctl -u job-tracker *` would let it read any service's logs, and journalctl's pager can open a root shell.)
 
 ```bash
-echo 'jobtracker ALL=(root) NOPASSWD: /usr/bin/systemctl restart job-tracker, /usr/bin/journalctl -u job-tracker *' | sudo tee /etc/sudoers.d/job-tracker
+echo 'jobtracker ALL=(root) NOPASSWD: /usr/bin/systemctl restart job-tracker, /usr/bin/journalctl -u job-tracker -n 40 --no-pager' | sudo tee /etc/sudoers.d/job-tracker
 sudo chmod 440 /etc/sudoers.d/job-tracker
 sudo visudo -c
 ```
 
 ## 5. Caddy
 
-Give Caddy the proxy secret from step 3 (it reads it as `{env.JT_PROXY_SECRET}`):
+Give Caddy the proxy secret from step 3 as a file it reads on each request. A reload picks it up, so your other sites never go down, and unlike a systemd `Environment=` line it isn't visible to other users through `systemctl show`. Write it with no trailing newline:
 
 ```bash
-sudo systemctl edit caddy
-# In the editor, add these two lines between the comment markers, then save:
-#   [Service]
-#   Environment=JT_PROXY_SECRET=<the PROXY_SECRET from step 3>
-sudo systemctl restart caddy        # restart, not reload: environment changes need a restart
+sudo sh -c 'umask 027; grep "^PROXY_SECRET=" /etc/job-tracker/job-tracker.env | cut -d= -f2- | tr -d "\n" > /etc/caddy/jobtracker-proxy-secret'
+sudo chown root:caddy /etc/caddy/jobtracker-proxy-secret && sudo chmod 640 /etc/caddy/jobtracker-proxy-secret
 ```
 
 Copy the block from `deploy/Caddyfile.example` into your Caddyfile, and put the same login directive your other sites use inside the second `handle`. Then:
@@ -80,6 +77,7 @@ Check both doors:
 curl -s -o /dev/null -w '%{http_code}\n' https://jobtracker.thezdev.com/                                   # 401 or a login redirect
 curl -s -o /dev/null -w '%{http_code}\n' -H 'Authorization: Bearer wrong' https://jobtracker.thezdev.com/api/dashboard   # 401 from the app
 curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8300/api/dashboard                                   # 401: local but no secret
+curl -s -o /dev/null -w '%{http_code}\n' -u michael https://jobtracker.thezdev.com/api/dashboard                  # 200 after the password prompt (basic_auth): login + secret work end to end
 ```
 
 Then open it in a browser and sign in. It'll be empty until step 7.

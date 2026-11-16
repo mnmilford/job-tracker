@@ -55,7 +55,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             return "demo"
         # No token: only requests that went through the proxy's login carry the
         # secret it injects. Other local processes and direct hits on the port don't.
-        sent = request.headers.get("x-proxy-secret", "")
+        sent = request.headers.get("x-proxy-secret", "").strip()
         if sent and hmac.compare_digest(sent, settings.proxy_secret):
             return "browser"
         raise HTTPException(401, "Sign in through the site, or send an API token")
