@@ -6,6 +6,7 @@
   },
   "applications": [
     {"kind": "active", "found": "2026-11-12", "company": "Brightline Health", "role": "Senior Solutions Engineer", "comp": "$140–160K", "source": "Greenhouse", "status": "Interviewing", "next_step": "Panel interview 2026-11-20 13:00 CT", "verdict": "match. Integration-heavy SE role; healthcare domain is the gap.",
+     "folder": "applications/2026-11-12_brightline_solutions-engineer", "files": ["Jordan_Rivera_Cover_Letter_Brightline.docx", "Jordan_Rivera_Cover_Letter_Brightline.pdf", "Jordan_Rivera_Resume_Brightline.docx", "Jordan_Rivera_Resume_Brightline.pdf", "notes.md", "posting.md", "resume.json"],
      "timeline": [{"date": "2026-11-12", "text": "Found; resume built"}, {"date": "2026-11-13", "text": "Applied"}, {"date": "2026-11-15", "text": "Recruiter screen went well; panel booked", "kind": "note"}]},
     {"kind": "active", "found": "2026-11-10", "company": "Northwind Labs", "role": "Technical Account Manager", "comp": "$125K + bonus", "source": "Ashby", "status": "Applied", "next_step": "Follow up if no response by 2026-11-24",
      "timeline": [{"date": "2026-11-10", "text": "Applied (Gmail)"}]},

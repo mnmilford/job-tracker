@@ -24,4 +24,4 @@ DEMO_MODE=1 .venv/bin/uvicorn app.main:app --port 8300
 
 ## Git
 
-The initial build was pushed straight to `main` (the repo was empty). Once deploy secrets are set, every push to `main` is a production release, so ask Michael which branch workflow he wants before pushing further changes.
+Push straight to `main`; no pull requests (Michael's call, 2026-11-16). Every push to `main` is a production release: CI runs `pytest` and deploys only if it passes, so run the tests locally first and say in the commit what changed for him.

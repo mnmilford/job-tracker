@@ -10,6 +10,7 @@ I use it for my own search. The code is public; my data isn't. It lives only in 
 - **Update from anywhere:** change status (Drafting → Applied → Recruiter screen → Interviewing → Offer, or Rejected / Withdrawn / Ghosted / Hired), set the next step, record why something closed, and add notes. Status changes and notes land on the timeline.
 - **Closed applications, filterable** by outcome and time window, and searchable along with everything else (including notes).
 - **Live:** the page notices changes made elsewhere (another device, or an agent) within 30 seconds.
+- **Documents one click away:** each application shows its resume and cover letter as **PDF** and **Word** buttons, linking to the files in the (private) documents repo on GitHub. GitHub serves them only to a browser signed in with access; the app never holds documents or GitHub tokens.
 - **Agent-friendly API:** bearer-token access, and every write records who made it (`dashboard`, `claude`, ...).
 
 ## How it's built

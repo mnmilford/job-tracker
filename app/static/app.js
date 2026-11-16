@@ -138,6 +138,28 @@
       if (D.outcomes.includes(s)) return `<span class="tag neutral">${esc(s)}</span>`;
       return `<span class="pill"><i style="background:${STAGE_VAR[s] || "var(--muted)"}"></i>${esc(s)}</span>`;
     };
+    // Document buttons: for each .docx in the application's folder, a PDF button
+    // (when the folder has a matching PDF) and a Word button. They link to the
+    // file in the documents repo on GitHub via /raw/, which serves the file
+    // itself; for a private repo GitHub only serves it to a browser signed in to
+    // an account with access. This app never stores documents or GitHub tokens.
+    const rawLink = (a, f) => `${D.repoUrl}/raw/${encodeURIComponent(D.branch)}/${`${a.folder}/${f}`.split("/").map(encodeURIComponent).join("/")}`;
+    const docButtons = (a) => {
+      if (!D.repoUrl || !a.folder) return "";
+      const docs = a.files.filter((f) => /\.docx$/i.test(f));
+      if (!docs.length) return "";
+      const label = (f) => /cover[_ -]?letter/i.test(f) ? "Cover letter" : /resume|\bcv\b/i.test(f) ? "Resume" : f.replace(/\.docx$/i, "");
+      const ordered = [...docs].sort((x, y) => (label(x) === "Resume" ? -1 : label(y) === "Resume" ? 1 : 0));
+      return `<div class="open-docs">${ordered.map((f, i) => {
+        const pdf = f.replace(/\.docx$/i, ".pdf");
+        const hasPdf = a.files.includes(pdf);
+        return `<span class="doc-pair">
+          ${hasPdf ? `<a class="btn${i ? " secondary" : ""}" href="${esc(rawLink(a, pdf))}" target="_blank" rel="noopener" title="${esc(pdf)}">${esc(label(f))} PDF</a>` : ""}
+          <a class="btn secondary" href="${esc(rawLink(a, f))}" target="_blank" rel="noopener" title="${esc(f)}">${esc(label(f))} (Word)</a>
+        </span>`;
+      }).join("")}</div>
+        <div class="btn-note">Downloads from GitHub. Sign in to GitHub in this browser if a link says "Not Found".</div>`;
+    };
     const fileLink = (a, f) => D.repoUrl && a.folder ? `${D.repoUrl}/blob/${D.branch}/${a.folder}/${f}` : "";
     const row = (a) => {
       const idle = a.kind === "active" && a.idle !== null
@@ -171,7 +193,7 @@
               ${a.kind === "active" ? `<dt>Next step</dt><dd>${esc(a.next || "—")}</dd>` : `<dt>Lesson</dt><dd>${esc(a.lesson || "—")}</dd>`}
               ${a.url ? `<dt>Posting</dt><dd><a href="${esc(a.url)}" target="_blank" rel="noopener">Original listing</a></dd>` : ""}
             </dl>
-            <h3>Files</h3>${files}
+            <h3>Files</h3>${docButtons(a)}${files}
           </div>
           <div><h3>Timeline</h3>${tl}</div>
         </div>
