@@ -103,6 +103,17 @@
     </div>
   </form>
 </dialog>
+<dialog id="pdf" aria-labelledby="pdf-title">
+  <div class="pdf-head">
+    <h2 id="pdf-title">Document</h2>
+    <div class="pdf-actions">
+      <a class="btn secondary" id="pdf-open" target="_blank" rel="noopener">Open in new tab</a>
+      <a class="btn secondary" id="pdf-download">Download</a>
+      <button class="btn ghost" type="button" id="pdf-close">Close</button>
+    </div>
+  </div>
+  <div class="pdf-body" id="pdf-body"><div class="pdf-msg" id="pdf-msg" role="status">Loading…</div></div>
+</dialog>
 <div id="tip" role="tooltip"></div>
 <script src="/static/app.js"></script>
 </body>

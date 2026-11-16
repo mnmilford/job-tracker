@@ -123,6 +123,23 @@ echo '15 3 * * * jobtracker sqlite3 /var/lib/job-tracker/tracker.db ".backup /va
 
 `GET /api/export` also returns everything as JSON, which is what an off-server backup should use.
 
+## 9. Document viewer (optional)
+
+Lets the app show each application's PDF in a built-in viewer and serve the Word file, read live from the documents repo. Without it, the PDF and Word buttons link to GitHub, which only works in a browser signed in to GitHub.
+
+1. GitHub: Settings → Developer settings → Personal access tokens → **Fine-grained tokens** → Generate new token.
+   - Repository access: **Only select repositories** → your documents repo.
+   - Permissions → Repository permissions → **Contents: Read-only**. Nothing else.
+   - Expiration: your call. When it expires, the viewer says "GitHub refused the documents token"; make a new one and repeat step 2.
+2. On the server, add it and restart:
+   ```bash
+   sudo nano /etc/job-tracker/job-tracker.env        # DOCS_GITHUB_TOKEN=github_pat_...
+   sudo systemctl restart job-tracker
+   ```
+3. Reload the app. PDF buttons now open the viewer.
+
+The token can only read that one repo. The app fetches a file when you open it and keeps no copy.
+
 ## Troubleshooting
 
 ```bash

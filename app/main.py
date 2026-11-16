@@ -7,10 +7,10 @@ import tempfile
 from pathlib import Path
 
 from fastapi import Body, Depends, FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 
-from . import tracker
+from . import docs, tracker
 from .config import Settings
 from .db import connect
 
@@ -71,6 +71,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def source_of(who: str) -> str:
         return "dashboard" if who in ("browser", "demo") else who
 
+    @app.exception_handler(docs.DocsError)
+    async def _docs(_, exc):
+        return JSONResponse({"detail": exc.detail}, status_code=exc.status)
+
     @app.exception_handler(tracker.NotFound)
     async def _nf(_, exc):
         return JSONResponse({"detail": str(exc)}, status_code=404)
@@ -103,6 +107,18 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.get("/api/applications/{app_id}")
     def get_app(app_id: int, _: str = Depends(caller), conn=Depends(db)):
         return tracker.get_application(conn, app_id)
+
+    @app.get("/api/applications/{app_id}/files/{name}")
+    def get_file(app_id: int, name: str, download: int = 0, _: str = Depends(caller), conn=Depends(db)):
+        """A PDF or .docx from the application's folder, read live from the documents repo."""
+        path, ctype = docs.resolve(tracker.get_application(conn, app_id), name)
+        data = docs.fetch(settings, path)
+        disposition = "inline" if ctype == "application/pdf" and not download else "attachment"
+        return Response(data, media_type=ctype, headers={
+            "Content-Disposition": f'{disposition}; filename="{name}"',
+            "Cache-Control": "private, no-store",
+            "X-Content-Type-Options": "nosniff",
+        })
 
     @app.get("/api/export")
     def export(_: str = Depends(caller), conn=Depends(db)):

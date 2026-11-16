@@ -139,13 +139,15 @@
       return `<span class="pill"><i style="background:${STAGE_VAR[s] || "var(--muted)"}"></i>${esc(s)}</span>`;
     };
     // Document buttons: for each .docx in the application's folder, a PDF button
-    // (when the folder has a matching PDF) and a Word button. They link to the
-    // file in the documents repo on GitHub via /raw/, which serves the file
-    // itself; for a private repo GitHub only serves it to a browser signed in to
-    // an account with access. This app never stores documents or GitHub tokens.
+    // (when the folder has a matching PDF) and a Word button. With the documents
+    // token set on the server (D.docsViewer), the PDF opens in the in-app viewer
+    // and both come through /api/.../files/, read live from the GitHub branch.
+    // Without it, they fall back to GitHub /raw/ links, which a private repo
+    // only serves to a browser signed in to GitHub.
     const rawLink = (a, f) => `${D.repoUrl}/raw/${encodeURIComponent(D.branch)}/${`${a.folder}/${f}`.split("/").map(encodeURIComponent).join("/")}`;
+    const fileUrl = (a, f, download) => `/api/applications/${a.id}/files/${encodeURIComponent(f)}${download ? "?download=1" : ""}`;
     const docButtons = (a) => {
-      if (!D.repoUrl || !a.folder) return "";
+      if (!a.folder || !(D.docsViewer || D.repoUrl)) return "";
       const docs = a.files.filter((f) => /\.docx$/i.test(f));
       if (!docs.length) return "";
       const label = (f) => /cover[_ -]?letter/i.test(f) ? "Cover letter" : /resume|\bcv\b/i.test(f) ? "Resume" : f.replace(/\.docx$/i, "");
@@ -153,12 +155,17 @@
       return `<div class="open-docs">${ordered.map((f, i) => {
         const pdf = f.replace(/\.docx$/i, ".pdf");
         const hasPdf = a.files.includes(pdf);
-        return `<span class="doc-pair">
-          ${hasPdf ? `<a class="btn${i ? " secondary" : ""}" href="${esc(rawLink(a, pdf))}" target="_blank" rel="noopener" title="${esc(pdf)}">${esc(label(f))} PDF</a>` : ""}
-          <a class="btn secondary" href="${esc(rawLink(a, f))}" target="_blank" rel="noopener" title="${esc(f)}">${esc(label(f))} (Word)</a>
+        const cls = `btn${i ? " secondary" : ""}`;
+        const pdfBtn = !hasPdf ? ""
+          : D.docsViewer
+            ? `<button class="${cls}" type="button" data-preview="${a.id}" data-file="${esc(pdf)}" title="${esc(pdf)}">${esc(label(f))} PDF</button>`
+            : `<a class="${cls}" href="${esc(rawLink(a, pdf))}" target="_blank" rel="noopener" title="${esc(pdf)}">${esc(label(f))} PDF</a>`;
+        const wordHref = D.docsViewer ? fileUrl(a, f, true) : rawLink(a, f);
+        return `<span class="doc-pair">${pdfBtn}
+          <a class="btn secondary" href="${esc(wordHref)}"${D.docsViewer ? "" : ' target="_blank" rel="noopener"'} title="${esc(f)}">${esc(label(f))} (Word)</a>
         </span>`;
       }).join("")}</div>
-        <div class="btn-note">Downloads from GitHub. Sign in to GitHub in this browser if a link says "Not Found".</div>`;
+        ${D.docsViewer ? "" : '<div class="btn-note">Downloads from GitHub. Sign in to GitHub in this browser if a link says "Not Found".</div>'}`;
     };
     const fileLink = (a, f) => D.repoUrl && a.folder ? `${D.repoUrl}/blob/${D.branch}/${a.folder}/${f}` : "";
     const row = (a) => {
@@ -322,6 +329,8 @@
   });
 
   document.addEventListener("click", async (e) => {
+    const pv = e.target.closest("[data-preview]");
+    if (pv) { openPdf(pv.dataset.preview, pv.dataset.file); return; }
     const ed = e.target.closest("[data-edit]");
     if (ed) { const a = window.__byId[ed.dataset.edit]; if (a) openEdit(a); return; }
     const del = e.target.closest("[data-del]");
@@ -331,6 +340,62 @@
       catch (err) { alert(err.message); }
     }
   });
+
+  // ---- PDF viewer ----
+  // Renders with PDF.js (vendored in /static/vendor/pdfjs, loaded on first use),
+  // so it looks the same on desktop and phones; Android browsers can't show a
+  // PDF inline on their own.
+  const pdfDlg = $("pdf");
+  let pdfjsLib = null, pdfRun = 0;
+  $("pdf-close").onclick = () => pdfDlg.close();
+  pdfDlg.addEventListener("close", () => { pdfRun++; $("pdf-body").querySelectorAll("canvas").forEach((c) => c.remove()); });
+  async function openPdf(appId, name) {
+    const run = ++pdfRun;
+    const url = `/api/applications/${encodeURIComponent(appId)}/files/${encodeURIComponent(name)}`;
+    const body = $("pdf-body"), msg = $("pdf-msg");
+    $("pdf-title").textContent = name.replace(/\.pdf$/i, "").replace(/_/g, " ");
+    $("pdf-open").href = url;
+    $("pdf-download").href = url + "?download=1";
+    body.querySelectorAll("canvas").forEach((c) => c.remove());
+    msg.hidden = false;
+    msg.textContent = "Loading from GitHub…";
+    if (!pdfDlg.open) pdfDlg.showModal();
+    try {
+      const res = await fetch(url, { credentials: "same-origin" });
+      if (!res.ok) {
+        let detail = "";
+        try { detail = (await res.json()).detail; } catch {}
+        throw new Error(detail || `HTTP ${res.status}`);
+      }
+      const data = new Uint8Array(await res.arrayBuffer());
+      if (!pdfjsLib) {
+        pdfjsLib = await import("/static/vendor/pdfjs/pdf.min.js");
+        pdfjsLib.GlobalWorkerOptions.workerSrc = "/static/vendor/pdfjs/pdf.worker.min.js";
+      }
+      const doc = await pdfjsLib.getDocument({ data }).promise;
+      if (run !== pdfRun) return;
+      msg.hidden = true;
+      const width = Math.max(240, Math.min(body.clientWidth - 24, 860));
+      for (let n = 1; n <= doc.numPages; n++) {
+        const page = await doc.getPage(n);
+        if (run !== pdfRun) return;
+        const dpr = window.devicePixelRatio || 1;
+        const vp = page.getViewport({ scale: (width / page.getViewport({ scale: 1 }).width) * dpr });
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.floor(vp.width);
+        canvas.height = Math.floor(vp.height);
+        canvas.style.width = `${Math.floor(vp.width / dpr)}px`;
+        canvas.setAttribute("role", "img");
+        canvas.setAttribute("aria-label", `${$("pdf-title").textContent}, page ${n} of ${doc.numPages}`);
+        body.appendChild(canvas);
+        await page.render({ canvasContext: canvas.getContext("2d"), viewport: vp }).promise;
+      }
+    } catch (err) {
+      if (run !== pdfRun) return;
+      msg.hidden = false;
+      msg.textContent = `Couldn't show this file. ${err.message}`;
+    }
+  }
 
   // ---- Load + live refresh ----
   async function load() {

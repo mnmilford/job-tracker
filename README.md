@@ -10,7 +10,7 @@ I use it for my own search. The code is public; my data isn't. It lives only in 
 - **Update from anywhere:** change status (Drafting → Applied → Recruiter screen → Interviewing → Offer, or Rejected / Withdrawn / Ghosted / Hired), set the next step, record why something closed, and add notes. Status changes and notes land on the timeline.
 - **Closed applications, filterable** by outcome and time window, and searchable along with everything else (including notes).
 - **Live:** the page notices changes made elsewhere (another device, or an agent) within 30 seconds.
-- **Documents one click away:** each application shows its resume and cover letter as **PDF** and **Word** buttons, linking to the files in the (private) documents repo on GitHub. GitHub serves them only to a browser signed in with access; the app never holds documents or GitHub tokens.
+- **Documents in the app:** each application shows its resume and cover letter as **PDF** and **Word** buttons. PDFs open in a built-in viewer (PDF.js, so it works the same on phones), read live from the private documents repo on GitHub. Without a docs token configured, the buttons link to GitHub instead.
 - **Agent-friendly API:** bearer-token access, and every write records who made it (`dashboard`, `claude`, ...).
 
 ## How it's built
@@ -22,7 +22,7 @@ GitHub Actions: tests on every push; on main, deploy over SSH with a forced-comm
 ```
 
 - **Backend:** Python, FastAPI, SQLite. No ORM; the schema is three tables (`app/db.py`). One connection per request, WAL mode, and `BEGIN IMMEDIATE` writes, so overlapping writes (an agent syncing while you edit on your phone) queue up instead of colliding. There's a test for exactly that.
-- **Front end:** one HTML page, one stylesheet, one script. No build step.
+- **Front end:** one HTML page, one stylesheet, one script. No build step. PDF.js 4.10.38 (Apache-2.0) is vendored in `app/static/vendor/pdfjs` and loaded only when a PDF is opened.
 - **Rules live in one place** (`app/tracker.py`): moving between in-progress and closed, stamping outcome dates, keeping the timeline, all-or-nothing imports.
 
 ### Security model
@@ -32,6 +32,7 @@ GitHub Actions: tests on every push; on main, deploy over SSH with a forced-comm
 - **Agents** send a bearer token (32+ chars, compared in constant time). The proxy lets bearer requests skip its login, and the app rejects any token it doesn't know.
 - **CSRF:** browser writes must carry `X-Requested-With: job-tracker`. Cross-site forms can't set it, and cross-site scripts would need a CORS preflight the app never grants.
 - **Import** (replace everything) is token-only.
+- **Documents:** the server reads them from GitHub with a fine-grained token limited to Contents: read on the one docs repo, and only serves files an application lists, inside its own folder, as PDF or Word. Nothing is cached or stored.
 - **Deploys** use an SSH key whose `authorized_keys` entry forces the deploy script, so the key can't open a shell.
 
 ## API

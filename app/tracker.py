@@ -12,6 +12,7 @@ import sqlite3
 from datetime import date as Date
 
 from .db import get_meta, set_meta, transaction
+from .docs import enabled as docs_enabled
 
 STAGES = ["Drafting", "Applied", "Recruiter screen", "Interviewing", "Offer"]
 OUTCOMES = ["Rejected", "Withdrawn", "Ghosted", "Hired"]
@@ -102,6 +103,7 @@ def dashboard(conn, settings) -> dict:
         "owner": settings.owner_name,
         "repoUrl": settings.docs_repo_url,
         "branch": settings.docs_branch,
+        "docsViewer": docs_enabled(settings),
         "demo": settings.demo_mode,
         "stages": STAGES,
         "outcomes": OUTCOMES,

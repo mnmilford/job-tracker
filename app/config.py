@@ -37,6 +37,8 @@ class Settings:
     owner_name: str = field(default_factory=lambda: os.environ.get("OWNER_NAME", ""))
     docs_repo_url: str = field(default_factory=lambda: os.environ.get("DOCS_REPO_URL", "").rstrip("/"))
     docs_branch: str = field(default_factory=lambda: os.environ.get("DOCS_BRANCH", "main"))
+    # Read-only GitHub token (fine-grained, Contents: read, docs repo only) for viewing documents in the app.
+    docs_github_token: str = field(default_factory=lambda: os.environ.get("DOCS_GITHUB_TOKEN", "").strip())
     demo_mode: bool = field(default_factory=lambda: _bool("DEMO_MODE"))
 
     def check(self) -> None:
