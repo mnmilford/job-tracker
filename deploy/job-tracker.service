@@ -1,0 +1,26 @@
+# /etc/systemd/system/job-tracker.service
+[Unit]
+Description=Job Tracker
+After=network.target
+
+[Service]
+User=jobtracker
+Group=jobtracker
+WorkingDirectory=/opt/job-tracker
+EnvironmentFile=/etc/job-tracker/job-tracker.env
+# --no-proxy-headers matters: the app trusts token-less requests only from
+# 127.0.0.1 (i.e. through Caddy's login). With proxy headers on, uvicorn would
+# replace the peer address with the browser's IP from X-Forwarded-For.
+ExecStart=/opt/job-tracker/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8300 --no-proxy-headers --workers 1
+Restart=on-failure
+RestartSec=3
+
+# Hardening: read-only system, writable data dir only.
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/job-tracker
+
+[Install]
+WantedBy=multi-user.target

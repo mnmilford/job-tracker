@@ -1,0 +1,27 @@
+# job-tracker
+
+Self-hosted job-application tracker (FastAPI + SQLite + one static page). Public repo and a portfolio piece; production runs at https://jobtracker.thezdev.com on Michael's DigitalOcean droplet.
+
+## Non-negotiables
+
+- **No real data in this repo, ever.** No names of real employers Michael applied to, recruiters, notes, exports, or databases. Real data lives only in the server's SQLite file. Test and demo data are invented (`demo/seed.json`). `export*.json`, `*.db`, `data/` are gitignored; keep it that way.
+- No secrets in the repo. Tokens live in `/etc/job-tracker/job-tracker.env` on the server and in GitHub Actions secrets.
+- `pytest -q` passes before every push. CI deploys `main` automatically, so a push to main is a production release.
+- Keep the front end build-free: `app/static/index.html`, `app.css`, `app.js`.
+- Business rules belong in `app/tracker.py`, not in routes or the front end.
+
+## Auth model (don't weaken it)
+
+Browsers log in at Caddy; token-less requests are trusted only from 127.0.0.1. Agents use `Authorization: Bearer`. Browser writes need `X-Requested-With: job-tracker`. Import is token-only. uvicorn must run with `--no-proxy-headers`. See README "Security model".
+
+## Commands
+
+```bash
+python3 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt
+.venv/bin/pytest -q
+DEMO_MODE=1 .venv/bin/uvicorn app.main:app --port 8300
+```
+
+## Git
+
+Michael approved working on `main` for the initial build. For later changes, follow whatever the session's instructions say about branches.

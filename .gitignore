@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+# Real data never goes in this repo. The database lives on the server.
+data/
+*.db
+*.db-*
+.env
+*.env
+!deploy/job-tracker.env.example
+export*.json
+.ssh/

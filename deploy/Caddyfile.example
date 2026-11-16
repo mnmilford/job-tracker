@@ -1,0 +1,25 @@
+# Add to your Caddyfile, then: sudo systemctl reload caddy
+jobtracker.thezdev.com {
+	# Agents (Claude) send "Authorization: Bearer <token>". They skip the login
+	# below; the app checks the token itself and rejects anything else.
+	@agent header Authorization "Bearer *"
+	handle @agent {
+		reverse_proxy 127.0.0.1:8300
+	}
+
+	# Everyone else signs in first. Use the same login your other sites use,
+	# e.g. import your existing auth snippet, or:
+	#   basic_auth {
+	#       michael <hash from: caddy hash-password>
+	#   }
+	handle {
+		# <your login directive here>
+		reverse_proxy 127.0.0.1:8300
+	}
+
+	header {
+		X-Robots-Tag "noindex, nofollow"
+		Referrer-Policy "same-origin"
+		X-Content-Type-Options "nosniff"
+	}
+}

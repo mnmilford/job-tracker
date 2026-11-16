@@ -1,0 +1,25 @@
+{
+  "format": "job-tracker/1",
+  "meta": {
+    "inbox_checked": "2026-11-15",
+    "inbox_review": ["Northwind Labs: recruiter replied \"let's find time next week\" with no date. Recruiter screen?"]
+  },
+  "applications": [
+    {"kind": "active", "found": "2026-11-12", "company": "Brightline Health", "role": "Senior Solutions Engineer", "comp": "$140–160K", "source": "Greenhouse", "status": "Interviewing", "next_step": "Panel interview 2026-11-20 13:00 CT", "verdict": "match. Integration-heavy SE role; healthcare domain is the gap.",
+     "timeline": [{"date": "2026-11-12", "text": "Found; resume built"}, {"date": "2026-11-13", "text": "Applied"}, {"date": "2026-11-15", "text": "Recruiter screen went well; panel booked", "kind": "note"}]},
+    {"kind": "active", "found": "2026-11-10", "company": "Northwind Labs", "role": "Technical Account Manager", "comp": "$125K + bonus", "source": "Ashby", "status": "Applied", "next_step": "Follow up if no response by 2026-11-24",
+     "timeline": [{"date": "2026-11-10", "text": "Applied (Gmail)"}]},
+    {"kind": "active", "found": "2026-10-28", "company": "Cobalt Systems", "role": "Support Operations Lead", "comp": "$115–130K", "source": "Lever", "status": "Applied", "next_step": "",
+     "timeline": [{"date": "2026-10-28", "text": "Applied"}]},
+    {"kind": "active", "found": "2026-11-16", "company": "Harbor & Pine", "role": "CRM Architect", "comp": "", "source": "Referral", "status": "Drafting", "next_step": "Finish cover letter",
+     "timeline": []},
+    {"kind": "active", "found": "2026-11-01", "company": "Atlas Freight", "role": "Implementation Consultant", "comp": "$110K", "source": "Workday", "status": "Recruiter screen", "next_step": "Screen 2026-11-18 10:00 CT",
+     "timeline": [{"date": "2026-11-01", "text": "Applied"}, {"date": "2026-11-11", "text": "Recruiter reached out (Gmail)"}]},
+    {"kind": "closed", "found": "2026-09-02", "company": "Quillfeather", "role": "Customer Success Engineer", "comp": "", "source": "Greenhouse", "status": "Rejected (2026-09-20)", "lesson": "Form rejection; wanted Salesforce admin experience."},
+    {"kind": "closed", "found": "2026-08-14", "company": "Meridian Analytics", "role": "Head of Support", "comp": "$180K", "source": "Ashby", "status": "Withdrawn (2026-09-05)", "lesson": "Relocation required; withdrew after the hiring-manager call."},
+    {"kind": "closed", "found": "2026-07-30", "company": "Tidewater Co.", "role": "Support Engineer", "comp": "", "source": "LinkedIn", "status": "Ghosted", "lesson": "No reply after applying."},
+    {"kind": "closed", "found": "2026-04-03", "company": "Ridgeway Software", "role": "Implementation Manager", "comp": "", "source": "Referral", "status": "Hired (2026-05-01)", "lesson": "Offer came through a referral."},
+    {"kind": "history", "company": "Sundial AI", "role": "Solutions Architect", "lesson": "Domain was load-bearing; good framing reference for AI roles."},
+    {"kind": "history", "company": "Pebble Payments", "role": "Senior TAM", "lesson": "Resume led with management scope."}
+  ]
+}

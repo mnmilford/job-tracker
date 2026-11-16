@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Job Tracker</title>
+<link rel="icon" type="image/svg+xml" href='data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"%3E%3Crect width="32" height="32" rx="7" fill="%233A7D7B"/%3E%3Cpath d="M12.5 10.5V8.8c0-.9.7-1.6 1.6-1.6h3.8c.9 0 1.6.7 1.6 1.6v1.7" fill="none" stroke="%23fff" stroke-width="2.2"/%3E%3Crect x="5.5" y="10.5" width="21" height="14.5" rx="2.6" fill="%23fff"/%3E%3Cpath d="M5.5 16.6h21" stroke="%233A7D7B" stroke-width="1.6" opacity=".45"/%3E%3Crect x="13.6" y="14.6" width="4.8" height="4" rx="1.1" fill="%233A7D7B"/%3E%3C/svg%3E'>
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<main>
+  <div class="banner" id="demo-banner" hidden>Demo with made-up data. Changes are allowed and reset when the server restarts.</div>
+  <header>
+    <div>
+      <h1 id="title">Job search</h1>
+      <div class="sub" id="sub">Loading…</div>
+    </div>
+    <div class="head-actions">
+      <button class="btn secondary" id="add" type="button">+ Add</button>
+      <button class="theme" id="theme" type="button" aria-label="Toggle color theme">Theme: auto</button>
+    </div>
+  </header>
+
+  <div class="kpis" id="kpis"></div>
+
+  <div class="two">
+    <div class="card">
+      <h2>Pipeline</h2>
+      <div class="funnel" id="funnel" role="group" aria-label="Active applications by stage. Select a stage to filter the list."></div>
+      <div class="empty" id="funnel-empty" hidden>No active applications yet.</div>
+    </div>
+    <div class="card">
+      <h2>Needs attention</h2>
+      <ul class="att" id="attention"></ul>
+    </div>
+  </div>
+
+  <section>
+    <h2>Active <span class="count" id="active-count"></span></h2>
+    <div class="filters" id="filters" role="toolbar" aria-label="Filter active applications by stage"></div>
+    <div class="apps" id="active"></div>
+  </section>
+
+  <section>
+    <h2>Closed <span class="count" id="closed-count"></span></h2>
+    <div class="closed-tools">
+      <div class="filters" id="closed-filters" role="toolbar" aria-label="Filter closed applications by outcome" style="margin:0"></div>
+      <select class="select" id="closed-when" aria-label="Closed in">
+        <option value="all">Any time</option>
+        <option value="30">Last 30 days</option>
+        <option value="90">Last 90 days</option>
+        <option value="year">This year</option>
+      </select>
+    </div>
+    <div class="apps" id="closed"></div>
+  </section>
+
+  <section>
+    <details class="fold" id="history-fold">
+      <summary>History <span id="history-count"></span></summary>
+      <p class="note">Older applications with no recorded outcome. Give one a status to move it into Active or Closed.</p>
+      <div class="tablewrap"><table id="history"></table></div>
+    </details>
+  </section>
+</main>
+
+<dialog id="edit" aria-labelledby="edit-title">
+  <form method="dialog" id="edit-form" novalidate>
+    <h2 id="edit-title">Update</h2>
+    <div class="who" id="edit-who"></div>
+    <div class="grid2" id="new-fields" hidden>
+      <div class="field"><label for="f-company">Company</label><input id="f-company" maxlength="120" autocomplete="off"></div>
+      <div class="field"><label for="f-role">Role</label><input id="f-role" maxlength="200" autocomplete="off"></div>
+    </div>
+    <div class="grid2">
+      <div class="field">
+        <label for="f-status">Status</label>
+        <select id="f-status"></select>
+      </div>
+      <div class="field" id="w-date">
+        <label for="f-date">Date</label>
+        <input id="f-date" type="date">
+      </div>
+    </div>
+    <div class="field" id="w-next">
+      <label for="f-next">Next step</label>
+      <input id="f-next" maxlength="300" autocomplete="off" placeholder="e.g. Follow up if no response by 2026-12-01">
+      <div class="help">Put a date (YYYY-MM-DD) in it and Needs attention will flag it when it's due.</div>
+    </div>
+    <div class="field" id="w-lesson">
+      <label for="f-lesson">Why it closed / lesson</label>
+      <input id="f-lesson" maxlength="600" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="f-note">Add a note <span style="font-weight:400;color:var(--muted)">(optional, goes on the timeline)</span></label>
+      <textarea id="f-note" maxlength="2000"></textarea>
+    </div>
+    <div class="dlg-actions">
+      <span class="msg" id="edit-msg" role="alert"></span>
+      <button class="btn ghost" type="button" id="edit-cancel">Cancel</button>
+      <button class="btn" type="submit" id="edit-save">Save</button>
+    </div>
+  </form>
+</dialog>
+<div id="tip" role="tooltip"></div>
+<script src="/static/app.js"></script>
+</body>
+</html>
