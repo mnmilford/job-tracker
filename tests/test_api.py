@@ -1,4 +1,4 @@
-from conftest import H, TOKEN, make
+from conftest import H, SECRET, TOKEN, make
 
 AUTH = {"Authorization": f"Bearer {TOKEN}"}
 
@@ -23,14 +23,24 @@ def test_good_token_reads(seeded):
     assert seeded.get("/api/dashboard", headers=AUTH).status_code == 200
 
 
-def test_browser_without_token_must_be_local(tmp_path):
-    from fastapi.testclient import TestClient
+def test_tokenless_needs_proxy_secret(tmp_path):
+    """Only requests that passed Caddy's login carry the secret. Local processes don't get a pass."""
+    bare = make(tmp_path)
+    bare.headers.pop("X-Proxy-Secret")
+    assert bare.get("/api/dashboard").status_code == 401
+    assert bare.get("/").status_code == 401
+    assert bare.get("/api/dashboard", headers={"X-Proxy-Secret": "wrong" * 10}).status_code == 401
+    assert bare.get("/api/dashboard", headers={"X-Proxy-Secret": SECRET}).status_code == 200
+    assert bare.get("/healthz").status_code == 200   # health check stays open for the deploy script
+
+
+def test_refuses_to_start_without_proxy_secret(tmp_path):
+    import pytest
     from app.config import Settings
     from app.main import create_app
-    s = Settings(); s.db_path = str(tmp_path / "x.db"); s.api_tokens = {}; s.demo_mode = False
-    remote = TestClient(create_app(s), client=("203.0.113.9", 5000))
-    assert remote.get("/api/dashboard").status_code == 401
-    assert remote.get("/").status_code == 401
+    s = Settings(); s.db_path = str(tmp_path / "x.db"); s.demo_mode = False; s.proxy_secret = "short"
+    with pytest.raises(RuntimeError, match="PROXY_SECRET"):
+        create_app(s)
 
 
 def test_browser_write_needs_csrf_header(seeded):

@@ -1,5 +1,9 @@
 # Add to your Caddyfile, then: sudo systemctl reload caddy
+# Needs JT_PROXY_SECRET in Caddy's environment (deploy/SETUP.md, step 5).
 jobtracker.thezdev.com {
+	# Never pass along a secret header a client tried to send itself.
+	request_header -X-Proxy-Secret
+
 	# Agents (Claude) send "Authorization: Bearer <token>". They skip the login
 	# below; the app checks the token itself and rejects anything else.
 	@agent header Authorization "Bearer *"
@@ -12,9 +16,12 @@ jobtracker.thezdev.com {
 	#   basic_auth {
 	#       michael <hash from: caddy hash-password>
 	#   }
+	# Only requests that got past it carry the secret the app requires.
 	handle {
 		# <your login directive here>
-		reverse_proxy 127.0.0.1:8300
+		reverse_proxy 127.0.0.1:8300 {
+			header_up X-Proxy-Secret {env.JT_PROXY_SECRET}
+		}
 	}
 
 	header {

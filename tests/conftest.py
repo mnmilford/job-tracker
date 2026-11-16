@@ -9,6 +9,7 @@ from app.config import Settings
 from app.main import create_app
 
 TOKEN = "t" * 40
+SECRET = "s" * 40
 H = {"X-Requested-With": "job-tracker"}
 
 
@@ -16,11 +17,13 @@ def make(tmp_path, **kw):
     s = Settings()
     s.db_path = str(tmp_path / "t.db")
     s.api_tokens = {TOKEN: "claude"}
+    s.proxy_secret = SECRET
     s.demo_mode = False
     s.owner_name = "Test"
     for k, v in kw.items():
         setattr(s, k, v)
-    return TestClient(create_app(s))
+    # By default the client behaves like a browser that came through Caddy's login.
+    return TestClient(create_app(s), headers={"X-Proxy-Secret": SECRET})
 
 
 @pytest.fixture

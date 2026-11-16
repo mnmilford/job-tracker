@@ -40,15 +40,21 @@ CREATE TABLE IF NOT EXISTS meta (
 """
 
 
-def connect(path: str) -> sqlite3.Connection:
-    if path != ":memory:":
+def connect(path: str, init: bool = False) -> sqlite3.Connection:
+    """Open a connection. The app opens one per request (SQLite connections are
+    cheap, and sharing one across FastAPI's worker threads lets overlapping
+    transactions collide). init=True also creates the schema; do that once at startup."""
+    if init:
         Path(path).parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(path, check_same_thread=False, isolation_level=None)
+    # check_same_thread=False: FastAPI may set up a dependency on one worker thread
+    # and run the endpoint on another. Each connection is still used by one request.
+    conn = sqlite3.connect(path, check_same_thread=False, isolation_level=None, timeout=10)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
-    conn.execute("PRAGMA journal_mode = WAL")
-    conn.execute("PRAGMA busy_timeout = 5000")
-    conn.executescript(SCHEMA)
+    conn.execute("PRAGMA busy_timeout = 10000")
+    if init:
+        conn.execute("PRAGMA journal_mode = WAL")   # persistent: set once on the file
+        conn.executescript(SCHEMA)
     return conn
 
 

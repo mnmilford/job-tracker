@@ -15,19 +15,19 @@ I use it for my own search. The code is public; my data isn't. It lives only in 
 ## How it's built
 
 ```
-Browser ──HTTPS──> Caddy (TLS + login) ──> uvicorn/FastAPI on 127.0.0.1 ──> SQLite (WAL)
+Browser ──HTTPS──> Caddy (TLS + login, adds proxy secret) ──> uvicorn/FastAPI on 127.0.0.1 ──> SQLite (WAL)
 Claude  ──HTTPS + Bearer token──> Caddy (skips login for bearer requests) ──┘   (app checks the token)
 GitHub Actions: tests on every push; on main, deploy over SSH with a forced-command key
 ```
 
-- **Backend:** Python, FastAPI, SQLite. No ORM; the schema is three tables (`app/db.py`).
+- **Backend:** Python, FastAPI, SQLite. No ORM; the schema is three tables (`app/db.py`). One connection per request, WAL mode, and `BEGIN IMMEDIATE` writes, so overlapping writes (an agent syncing while you edit on your phone) queue up instead of colliding. There's a test for exactly that.
 - **Front end:** one HTML page, one stylesheet, one script. No build step.
 - **Rules live in one place** (`app/tracker.py`): moving between in-progress and closed, stamping outcome dates, keeping the timeline, all-or-nothing imports.
 
 ### Security model
 
 - The app listens on `127.0.0.1` only and runs as its own unprivileged user under a hardened systemd unit.
-- **Browsers** authenticate at the reverse proxy. Requests without a token are accepted only from the local machine (that is, through the proxy), so an accidentally exposed port still gives nothing away.
+- **Browsers** authenticate at the reverse proxy, which then adds a shared secret header (after stripping any copy the client sent). Token-less requests without that secret are refused, so other processes on the server, or an accidentally exposed port, get nothing.
 - **Agents** send a bearer token (32+ chars, compared in constant time). The proxy lets bearer requests skip its login, and the app rejects any token it doesn't know.
 - **CSRF:** browser writes must carry `X-Requested-With: job-tracker`. Cross-site forms can't set it, and cross-site scripts would need a CORS preflight the app never grants.
 - **Import** (replace everything) is token-only.

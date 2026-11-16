@@ -1,7 +1,8 @@
-"""HTTP layer. Run: uvicorn app.main:app --host 127.0.0.1 --port 8300"""
+"""HTTP layer. Run: uvicorn app.main:app --host 127.0.0.1 --port 8300 --no-proxy-headers"""
 import hmac
 import json
 import os
+import sqlite3
 import tempfile
 from pathlib import Path
 
@@ -15,7 +16,6 @@ from .db import connect
 
 STATIC = Path(__file__).parent / "static"
 DEMO_SEED = Path(__file__).parent.parent / "demo" / "seed.json"
-LOCAL_PEERS = {"127.0.0.1", "::1", "testclient"}   # "testclient" is FastAPI's test client
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -24,16 +24,26 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     if settings.demo_mode:
         # Fresh copy of the fake data on every start; visitors can click around freely.
         settings.db_path = os.path.join(tempfile.mkdtemp(prefix="job-tracker-demo-"), "demo.db")
-    conn = connect(settings.db_path)
+    setup = connect(settings.db_path, init=True)
     if settings.demo_mode and DEMO_SEED.exists():
-        tracker.import_all(conn, json.loads(DEMO_SEED.read_text()))
+        tracker.import_all(setup, json.loads(DEMO_SEED.read_text()))
+    setup.close()
 
     app = FastAPI(title="Job Tracker", docs_url=None, redoc_url=None, openapi_url="/api/openapi.json")
-    app.state.settings, app.state.conn = settings, conn
+    app.state.settings = settings
+
+    def db():
+        """One connection per request: overlapping requests run on different
+        threads, and SQLite (WAL + busy timeout) serializes their writes safely."""
+        conn = connect(settings.db_path)
+        try:
+            yield conn
+        finally:
+            conn.close()
 
     # ---- auth ----
     def caller(request: Request) -> str:
-        """Who is calling: a token name, 'browser' (came through the proxy login), or 'demo'."""
+        """Who is calling: a token name, 'browser' (passed the proxy login), or 'demo'."""
         header = request.headers.get("authorization", "")
         if header.lower().startswith("bearer "):
             token = header[7:].strip()
@@ -43,12 +53,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             raise HTTPException(401, "Invalid API token")
         if settings.demo_mode:
             return "demo"
-        # No token: trusted only when it comes from this machine, i.e. through the
-        # proxy, which already made the browser sign in. If the port is ever exposed
-        # by mistake, outside callers still get nothing without a token.
-        if (request.client.host if request.client else "") not in LOCAL_PEERS:
-            raise HTTPException(401, "Sign in through the site, or send an API token")
-        return "browser"
+        # No token: only requests that went through the proxy's login carry the
+        # secret it injects. Other local processes and direct hits on the port don't.
+        sent = request.headers.get("x-proxy-secret", "")
+        if sent and hmac.compare_digest(sent, settings.proxy_secret):
+            return "browser"
+        raise HTTPException(401, "Sign in through the site, or send an API token")
 
     def writer(request: Request, who: str = Depends(caller)) -> str:
         """Writes from a browser must be same-origin fetches. A cross-site form or
@@ -71,7 +81,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     # ---- pages ----
     @app.get("/healthz")
-    def healthz():
+    def healthz(conn: sqlite3.Connection = Depends(db)):
         conn.execute("SELECT 1")
         return {"ok": True}
 
@@ -83,44 +93,44 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     # ---- reads ----
     @app.get("/api/dashboard")
-    def get_dashboard(_: str = Depends(caller)):
+    def get_dashboard(_: str = Depends(caller), conn=Depends(db)):
         return tracker.dashboard(conn, settings)
 
     @app.get("/api/applications")
-    def list_apps(kind: str | None = None, _: str = Depends(caller)):
+    def list_apps(kind: str | None = None, _: str = Depends(caller), conn=Depends(db)):
         return tracker.list_applications(conn, kind)
 
     @app.get("/api/applications/{app_id}")
-    def get_app(app_id: int, _: str = Depends(caller)):
+    def get_app(app_id: int, _: str = Depends(caller), conn=Depends(db)):
         return tracker.get_application(conn, app_id)
 
     @app.get("/api/export")
-    def export(_: str = Depends(caller)):
+    def export(_: str = Depends(caller), conn=Depends(db)):
         return tracker.export_all(conn)
 
     # ---- writes ----
     @app.post("/api/applications", status_code=201)
-    def create(data: dict = Body(...), who: str = Depends(writer)):
+    def create(data: dict = Body(...), who: str = Depends(writer), conn=Depends(db)):
         return tracker.create_application(conn, data, source_of(who))
 
     @app.patch("/api/applications/{app_id}")
-    def update(app_id: int, data: dict = Body(...), who: str = Depends(writer)):
+    def update(app_id: int, data: dict = Body(...), who: str = Depends(writer), conn=Depends(db)):
         return tracker.update_application(conn, app_id, data, source_of(who))
 
     @app.post("/api/applications/{app_id}/events", status_code=201)
-    def add_event(app_id: int, data: dict = Body(...), who: str = Depends(writer)):
+    def add_event(app_id: int, data: dict = Body(...), who: str = Depends(writer), conn=Depends(db)):
         return tracker.add_event(conn, app_id, data.get("text"), data.get("date"), data.get("kind") or "timeline", source_of(who))
 
     @app.delete("/api/applications/{app_id}/events/{event_id}")
-    def delete_note(app_id: int, event_id: int, _: str = Depends(writer)):
+    def delete_note(app_id: int, event_id: int, _: str = Depends(writer), conn=Depends(db)):
         return tracker.delete_event(conn, app_id, event_id)
 
     @app.put("/api/inbox")
-    def put_inbox(data: dict = Body(...), _: str = Depends(writer)):
+    def put_inbox(data: dict = Body(...), _: str = Depends(writer), conn=Depends(db)):
         return tracker.set_inbox(conn, data.get("checked"), data.get("review"))
 
     @app.post("/api/import")
-    def do_import(data: dict = Body(...), who: str = Depends(writer)):
+    def do_import(data: dict = Body(...), who: str = Depends(writer), conn=Depends(db)):
         if who in ("browser", "demo"):
             raise HTTPException(403, "Import replaces everything; only an API token can do it")
         return tracker.import_all(conn, data)

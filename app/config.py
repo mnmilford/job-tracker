@@ -1,8 +1,11 @@
 """Settings, all from environment variables (see deploy/job-tracker.env.example).
 
 Auth model (AUTH_MODE=proxy, the default):
-  - Browsers sign in at the reverse proxy (Caddy). The app listens on 127.0.0.1
-    only, so anything that reaches it without a token came through that login.
+  - Browsers sign in at the reverse proxy (Caddy). Caddy then adds
+    "X-Proxy-Secret: <PROXY_SECRET>" to the request (after stripping any copy the
+    client sent). The app accepts token-less requests only with that secret, so
+    other processes on the server, or anything that reaches the port directly,
+    get nothing.
   - Agents (Claude) send "Authorization: Bearer <token>". Caddy lets those
     through without its login, and the app checks the token itself.
 DEMO_MODE=1 serves seeded fake data with no auth, for the public portfolio demo.
@@ -30,6 +33,7 @@ class Settings:
     db_path: str = field(default_factory=lambda: os.environ.get("DB_PATH", "data/tracker.db"))
     auth_mode: str = field(default_factory=lambda: os.environ.get("AUTH_MODE", "proxy"))
     api_tokens: dict = field(default_factory=lambda: _tokens(os.environ.get("API_TOKENS", "")))
+    proxy_secret: str = field(default_factory=lambda: os.environ.get("PROXY_SECRET", ""))
     owner_name: str = field(default_factory=lambda: os.environ.get("OWNER_NAME", ""))
     docs_repo_url: str = field(default_factory=lambda: os.environ.get("DOCS_REPO_URL", "").rstrip("/"))
     docs_branch: str = field(default_factory=lambda: os.environ.get("DOCS_BRANCH", "main"))
@@ -40,3 +44,5 @@ class Settings:
             return
         if self.auth_mode != "proxy":
             raise RuntimeError("Not starting: AUTH_MODE must be 'proxy' (the only mode so far)")
+        if len(self.proxy_secret) < 32:
+            raise RuntimeError("Not starting: PROXY_SECRET must be set (32+ chars) and match the one Caddy sends")

@@ -2,7 +2,7 @@
 
 Target: `https://jobtracker.thezdev.com`, served by Caddy (which already handles login for your other apps), running the app as its own locked-down user. After this, every push to `main` that passes tests deploys itself.
 
-Assumes Ubuntu 22.04+ (Python 3.10 or newer) with Caddy already running. Run everything as your normal sudo user unless a step says otherwise.
+Assumes Ubuntu 22.04+ (Python 3.10 or newer) with Caddy installed from the official package, running under systemd on the host (not in Docker). If your Caddy runs in a container, stop at step 5 and say so: the address it proxies to changes. Run everything as your normal sudo user unless a step says otherwise.
 
 ## 1. DNS
 
@@ -31,11 +31,12 @@ sudo install -d -o jobtracker -g jobtracker -m 750 /var/lib/job-tracker /var/lib
 sudo install -d -m 755 /etc/job-tracker
 sudo cp /opt/job-tracker/deploy/job-tracker.env.example /etc/job-tracker/job-tracker.env
 sudo chmod 600 /etc/job-tracker/job-tracker.env
-python3 -c "import secrets; print(secrets.token_urlsafe(32))"   # copy this: it's Claude's API token
-sudo nano /etc/job-tracker/job-tracker.env                       # replace REPLACE_ME with it
+python3 -c "import secrets; print(secrets.token_urlsafe(32))"   # run twice: one proxy secret, one API token
+sudo nano /etc/job-tracker/job-tracker.env                       # PROXY_SECRET=<first>, API_TOKENS=claude:<second>
 ```
 
-Keep that token somewhere safe (a password manager). You'll paste it into a secure form when Claude asks for it, never into chat.
+- The **proxy secret** also goes to Caddy in step 5. Nobody else ever needs it.
+- The **API token** is Claude's key. Keep it in your password manager; you'll paste it into a secure form when Claude asks for it, never into chat.
 
 ## 4. Service
 
@@ -56,6 +57,16 @@ sudo visudo -c
 
 ## 5. Caddy
 
+Give Caddy the proxy secret from step 3 (it reads it as `{env.JT_PROXY_SECRET}`):
+
+```bash
+sudo systemctl edit caddy
+# In the editor, add these two lines between the comment markers, then save:
+#   [Service]
+#   Environment=JT_PROXY_SECRET=<the PROXY_SECRET from step 3>
+sudo systemctl restart caddy        # restart, not reload: environment changes need a restart
+```
+
 Copy the block from `deploy/Caddyfile.example` into your Caddyfile, and put the same login directive your other sites use inside the second `handle`. Then:
 
 ```bash
@@ -68,6 +79,7 @@ Check both doors:
 ```bash
 curl -s -o /dev/null -w '%{http_code}\n' https://jobtracker.thezdev.com/                                   # 401 or a login redirect
 curl -s -o /dev/null -w '%{http_code}\n' -H 'Authorization: Bearer wrong' https://jobtracker.thezdev.com/api/dashboard   # 401 from the app
+curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8300/api/dashboard                                   # 401: local but no secret
 ```
 
 Then open it in a browser and sign in. It'll be empty until step 7.

@@ -12,7 +12,7 @@ Self-hosted job-application tracker (FastAPI + SQLite + one static page). Public
 
 ## Auth model (don't weaken it)
 
-Browsers log in at Caddy; token-less requests are trusted only from 127.0.0.1. Agents use `Authorization: Bearer`. Browser writes need `X-Requested-With: job-tracker`. Import is token-only. uvicorn must run with `--no-proxy-headers`. See README "Security model".
+Browsers log in at Caddy, which injects `X-Proxy-Secret`; token-less requests without it get 401. Agents use `Authorization: Bearer`. Browser writes need `X-Requested-With: job-tracker`. Import is token-only. One SQLite connection per request (never share one across threads). See README "Security model".
 
 ## Commands
 
@@ -24,4 +24,4 @@ DEMO_MODE=1 .venv/bin/uvicorn app.main:app --port 8300
 
 ## Git
 
-Michael approved working on `main` for the initial build. For later changes, follow whatever the session's instructions say about branches.
+The initial build was pushed straight to `main` (the repo was empty). Once deploy secrets are set, every push to `main` is a production release, so ask Michael which branch workflow he wants before pushing further changes.

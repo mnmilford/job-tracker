@@ -8,9 +8,8 @@ User=jobtracker
 Group=jobtracker
 WorkingDirectory=/opt/job-tracker
 EnvironmentFile=/etc/job-tracker/job-tracker.env
-# --no-proxy-headers matters: the app trusts token-less requests only from
-# 127.0.0.1 (i.e. through Caddy's login). With proxy headers on, uvicorn would
-# replace the peer address with the browser's IP from X-Forwarded-For.
+# Listens on localhost only; Caddy is the front door. Proxy headers are ignored
+# because nothing in the app needs the browser's IP.
 ExecStart=/opt/job-tracker/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8300 --no-proxy-headers --workers 1
 Restart=on-failure
 RestartSec=3
