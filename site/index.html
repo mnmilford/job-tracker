@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Job Tracker: your daily dose of AI slopware</title>
+<meta name="description" content="A self-hosted job-application tracker built in about 22 hours by directing AI agents. Try the live demo with made-up companies, then read how it got built.">
+<link rel="canonical" href="https://mnmilford.github.io/job-tracker/">
+<meta name="theme-color" content="#f9f9f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0d0d0d" media="(prefers-color-scheme: dark)">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Job Tracker">
+<meta property="og:title" content="Job Tracker: your daily dose of AI slopware">
+<meta property="og:description" content="A self-hosted job-application tracker built in about 22 hours by directing AI agents. Click around the live demo. Every company in it is invented.">
+<meta property="og:url" content="https://mnmilford.github.io/job-tracker/">
+<meta property="og:image" content="https://mnmilford.github.io/job-tracker/img/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="The Job Tracker main view: a stage strip across the top, applications grouped by stage, and a Today rail on the right.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Job Tracker: your daily dose of AI slopware">
+<meta name="twitter:description" content="A self-hosted job-application tracker built in about 22 hours by directing AI agents. Click around the live demo.">
+<meta name="twitter:image" content="https://mnmilford.github.io/job-tracker/img/og.png">
+<meta name="twitter:image:alt" content="The Job Tracker main view: a stage strip across the top, applications grouped by stage, and a Today rail on the right.">
+
+<link rel="icon" type="image/svg+xml" href='data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"%3E%3Crect width="32" height="32" rx="7" fill="%233A7D7B"/%3E%3Cpath d="M12.5 10.5V8.8c0-.9.7-1.6 1.6-1.6h3.8c.9 0 1.6.7 1.6 1.6v1.7" fill="none" stroke="%23fff" stroke-width="2.2"/%3E%3Crect x="5.5" y="10.5" width="21" height="14.5" rx="2.6" fill="%23fff"/%3E%3Cpath d="M5.5 16.6h21" stroke="%233A7D7B" stroke-width="1.6" opacity=".45"/%3E%3Crect x="13.6" y="14.6" width="4.8" height="4" rx="1.1" fill="%233A7D7B"/%3E%3C/svg%3E'>
+<link rel="stylesheet" href="landing.css">
+<script src="landing.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="site-head">
+  <div class="wrap head-row">
+    <a class="brand" href="./" aria-label="Job Tracker, top of page">
+      <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><rect width="32" height="32" rx="7" fill="#3A7D7B"/><path d="M12.5 10.5V8.8c0-.9.7-1.6 1.6-1.6h3.8c.9 0 1.6.7 1.6 1.6v1.7" fill="none" stroke="#fff" stroke-width="2.2"/><rect x="5.5" y="10.5" width="21" height="14.5" rx="2.6" fill="#fff"/><path d="M5.5 16.6h21" stroke="#3A7D7B" stroke-width="1.6" opacity=".45"/><rect x="13.6" y="14.6" width="4.8" height="4" rx="1.1" fill="#3A7D7B"/></svg>
+      <span>Job Tracker</span>
+    </a>
+    <nav class="head-nav" aria-label="Sections">
+      <a href="#demo">Demo</a>
+      <a href="#features">What it does</a>
+      <a href="#built">How it got built</a>
+      <a href="#run">Run it</a>
+    </nav>
+    <a class="btn btn-quiet head-gh" href="https://github.com/mnmilford/job-tracker">
+      <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+      <span>GitHub</span>
+    </a>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- ============ Hero ============ -->
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="wrap">
+      <p class="eyebrow">Your daily dose of AI slopware</p>
+      <h1 id="hero-title">A job tracker I directed into existence in 22&nbsp;hours.</h1>
+      <p class="lead">A spreadsheet can store job applications. This one also tells you what needs you today and what changed while you weren't looking. AI agents wrote the code. I decided what it should be and sent things back until it was.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="#demo">Click around the demo</a>
+        <a class="btn btn-secondary" href="https://github.com/mnmilford/job-tracker">Get the code</a>
+      </div>
+
+      <ol class="stagestrip" aria-label="The project in numbers">
+        <li><span class="ss-label">Wall clock</span><span class="ss-num">22<small> hrs</small></span></li>
+        <li><span class="ss-label">AI agents</span><span class="ss-num">6</span></li>
+        <li><span class="ss-label">Commits</span><span class="ss-num">10</span></li>
+        <li><span class="ss-label">Automated tests</span><span class="ss-num">52</span></li>
+        <li><span class="ss-label">Real companies</span><span class="ss-num">0</span></li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ============ Live demo ============ -->
+  <section class="demo" id="demo" aria-labelledby="demo-title">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 id="demo-title">Click around. Nothing here is real.</h2>
+        <p>This is the actual app, running in your browser against a fake API. Every company is invented. Change whatever you like; it all resets when you reload.</p>
+      </div>
+      <ul class="chips" aria-label="Things to try">
+        <li>Click a status badge</li>
+        <li>Open any row</li>
+        <li>Try the Flow button</li>
+        <li>Open Appearance and break the colors</li>
+        <li>Click inside, then press <kbd>?</kbd></li>
+      </ul>
+    </div>
+
+    <div class="wrap wrap-wide">
+      <figure class="browser" id="demo-frame">
+        <div class="browser-bar">
+          <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="url" aria-hidden="true">job tracker &middot; demo</span>
+          <a class="browser-open" href="demo/" target="_blank" rel="noopener">Open full screen <span aria-hidden="true">&#8599;</span></a>
+        </div>
+        <div class="browser-view">
+          <iframe id="demo-iframe" data-src="demo/" title="Job Tracker live demo with made-up data" loading="lazy"></iframe>
+          <noscript><p class="noscript">The embedded demo needs JavaScript. <a href="demo/">Open the demo</a> instead.</p></noscript>
+        </div>
+      </figure>
+
+      <div class="demo-phone">
+        <img src="img/phone.webp" width="1170" height="1992" loading="lazy" decoding="async"
+             alt="The tracker on a phone: the title and buttons on top, a search box, a scrolling stage strip, and applications as stacked cards grouped under Offer and Interviewing.">
+        <div class="demo-phone-text">
+          <p>The demo works on phones. It just wants the whole screen to itself.</p>
+          <a class="btn btn-primary" href="demo/">Open the demo</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ What it does ============ -->
+  <section class="features" id="features" aria-labelledby="features-title">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 id="features-title">What it does</h2>
+        <p>Short version: it tells you what to do next. Long version below, with screenshots of companies that don't exist.</p>
+      </div>
+
+      <!-- Where things stand: before / after -->
+      <article class="feature feature-stack" aria-labelledby="f-today">
+        <div class="feature-text cols">
+          <div>
+            <h3 id="f-today">Where things stand, then what changed</h3>
+            <p>Version one worked. That was the problem. It had summary cards, a bar chart and a box called "Needs attention," all of it accurate, and I still had to read the whole page to find out what to do next. The redesign puts the stages across the top, groups applications by stage, and moves everything that needs me into a rail on the right.</p>
+            <p class="call"><span>The call</span> Where things stand goes first. What changed overnight goes right after it.</p>
+          </div>
+          <div>
+            <p><strong>Today</strong> collects overdue next steps, anything quiet for 10+ days, and calls the email sync couldn't make on its own. Each one gets a button: Done, Snooze, Followed up, or Ghosted.</p>
+            <p><strong>Since you last looked</strong> lists changes you didn't make yourself. Usually that means Claude, which reads my Gmail (read-only) and updates statuses when a rejection or an interview invite shows up. Every change it makes is signed on the timeline.</p>
+          </div>
+        </div>
+        <div class="ba">
+          <figure class="shot">
+            <a class="zoom" href="img/before.webp"><img src="img/before.webp" width="1280" height="1606" loading="lazy" decoding="async"
+                 alt="Before: the first version, with five summary cards, a pipeline bar chart, a Needs attention list, and plain tables of active and closed applications."></a>
+            <figcaption><span class="tag">Before</span> Correct and thorough. Read every word to find one task.</figcaption>
+          </figure>
+          <figure class="shot">
+            <a class="zoom" href="img/main-view.webp"><img src="img/main-view.webp" width="1600" height="1000" loading="lazy" decoding="async"
+                 alt="After: a stage strip with counts, applications grouped under Offer, Interviewing, Recruiter screen, Applied and Drafting, and a Today rail showing Kombucha Analytics overdue by three days, Vaporware Ventures quiet for 20 days, and an inbox question about whether 'let's circle back' counts as a recruiter screen."></a>
+            <figcaption><span class="tag tag-accent">After</span> The overdue one is red, at the top, with a Done button. The inbox item wants to know whether "let's circle back" with no date counts as a recruiter screen. Reasonable question.</figcaption>
+          </figure>
+        </div>
+      </article>
+
+      <!-- Status + drawer -->
+      <article class="feature feature-stack" aria-labelledby="f-edit">
+        <div class="feature-text cols">
+          <div>
+            <h3 id="f-edit">Update things without opening a form</h3>
+          </div>
+          <div>
+            <p>Click a row's status badge, pick the new stage. Two clicks. Open the row and a drawer slides in where every field edits in place: next step and date, comp, source, posting link, fit, notes. The timeline below records each change and who made it.</p>
+          </div>
+        </div>
+        <div class="pair pair-status">
+          <figure class="shot">
+            <a class="zoom" href="img/status-menu.webp"><img src="img/status-menu.webp" width="1600" height="896" loading="lazy" decoding="async"
+                 alt="The status menu open on a row's badge, listing in-progress stages Drafting through Offer and closed outcomes Rejected, Withdrawn and Ghosted, each with a number key."></a>
+            <figcaption>Click the badge, pick a stage. Rejected is number 6, for the muscle memory.</figcaption>
+          </figure>
+          <figure class="shot">
+            <a class="zoom" href="img/drawer.webp"><img src="img/drawer.webp" width="1600" height="1000" loading="lazy" decoding="async"
+                 alt="The detail drawer for Unicorn Stables Inc., Head of Customer Support, with editable fields and a timeline whose latest note, added via claude, reads: Offer letter arrived. The font is Comic Sans. Still counts."></a>
+            <figcaption>The offer letter was in Comic Sans. The timeline notes it, and notes that Claude noticed.</figcaption>
+          </figure>
+        </div>
+      </article>
+
+      <!-- Archive -->
+      <article class="feature" aria-labelledby="f-archive">
+        <div class="feature-text">
+          <h3 id="f-archive">An archive that remembers why</h3>
+          <p>Closed applications move to the archive with a one-line lesson. Filter by outcome or time window, or search it along with everything else, notes included. The lessons are meant to be useful. Some of them are.</p>
+        </div>
+        <figure class="shot shot-lg">
+          <a class="zoom" href="img/archive.webp"><img src="img/archive.webp" width="1600" height="1000" loading="lazy" decoding="async"
+               alt="The archive with filters for Rejected, Withdrawn, Ghosted, Hired and History. Lessons include: Interview was at a retreat. Mandatory. In the woods. And: Applied, then silence. They're very good at sleep."></a>
+          <figcaption>Definitely Not A Cult Wellness: "Interview was at a retreat. Mandatory. In the woods." Withdrawn.</figcaption>
+        </figure>
+      </article>
+
+      <!-- Flow chart -->
+      <article class="feature feature-stack" aria-labelledby="f-flow">
+        <div class="feature-text cols">
+          <div>
+            <h3 id="f-flow">A flow chart of your own attrition</h3>
+            <p class="call"><span>The call</span> Add a flow chart, in the middle of the build. Plans are allowed to change.</p>
+          </div>
+          <div>
+            <p>A Sankey chart of how applications moved through the stages to their outcomes. Filter it, flip to a table, download it as PNG or SVG. It only draws stages that were actually recorded. Applications imported with just an outcome show up as "Stage not recorded" instead of the chart making something up.</p>
+          </div>
+        </div>
+        <div class="pair">
+          <figure class="shot">
+            <a class="zoom" href="img/flow-chart.webp"><img src="img/flow-chart.webp" width="1600" height="1000" loading="lazy" decoding="async"
+                 alt="The Flow dialog: a Sankey chart from 17 applications through Applied, Recruiter screen, Interviewing and Offer to Hired, Still in progress, Rejected, Withdrawn and Ghosted, with filters and Chart, Table and Download buttons."></a>
+            <figcaption>17 applications in, 1 hire out. The chart reports this without comment.</figcaption>
+          </figure>
+          <figure class="shot">
+            <a class="zoom" href="img/flow-export.webp"><img src="img/flow-export.webp" width="1600" height="993" loading="lazy" decoding="async"
+                 alt="The downloaded chart image titled Job search flow, with a one-line summary of the filters used and a legend for Stage not recorded."></a>
+            <figcaption>The download. Suitable for a slide, if your job search has slides.</figcaption>
+          </figure>
+        </div>
+      </article>
+
+      <!-- Appearance -->
+      <article class="feature feature-stack" aria-labelledby="f-theme">
+        <div class="feature-text cols">
+          <div>
+            <h3 id="f-theme">Change every color. Regret some of them.</h3>
+            <p class="call"><span>The call</span> Keep the original colors as the default. Make all of them changeable.</p>
+          </div>
+          <div>
+            <p>The Appearance panel has five themes: Default, Graphite, Stage hues, Paper and High contrast. Past that you control every color in light and dark, plus the font, size, density, corner radius and badge style. A contrast check tells you when you've gone too far.</p>
+            <p>Themes sync across devices: one for your computers and a separate one for your phone.</p>
+          </div>
+        </div>
+        <div class="pair">
+          <figure class="shot">
+            <a class="zoom" href="img/theme-paper.webp"><img src="img/theme-paper.webp" width="1600" height="1000" loading="lazy" decoding="async"
+                 alt="The Appearance panel with the Paper theme selected: cream background, serif type, theme cards for all five themes, and color fields with a note that text contrast passes WCAG AA in light mode."></a>
+            <figcaption>Paper: cream, serif, sepia ink. For the job seeker who owns a fountain pen.</figcaption>
+          </figure>
+          <figure class="shot">
+            <a class="zoom" href="img/theme-dark.webp"><img src="img/theme-dark.webp" width="1600" height="1000" loading="lazy" decoding="async"
+                 alt="The main view in dark mode with the Stage hues theme, giving each stage its own color, and filled pill badges for each status."></a>
+            <figcaption>Dark mode, Stage hues theme, filled badges. Someone's idea of a good time.</figcaption>
+          </figure>
+        </div>
+      </article>
+
+      <!-- Shortcuts + phone -->
+      <article class="feature feature-stack" aria-labelledby="f-keys">
+        <div class="feature-text cols">
+          <div>
+            <h3 id="f-keys">Keyboard first, phone second</h3>
+            <p class="call"><span>The call</span> Desktop first. The phone layout came after, and it works.</p>
+          </div>
+          <div>
+            <p><kbd>j</kbd> and <kbd>k</kbd> move between applications, <kbd>s</kbd> changes status, <kbd>n</kbd> adds one, <kbd>f</kbd> opens the flow chart, and <kbd>?</kbd> lists the rest. On a phone the same page folds into stacked cards.</p>
+          </div>
+        </div>
+        <div class="pair pair-phone">
+          <figure class="shot">
+            <a class="zoom" href="img/shortcuts.webp"><img src="img/shortcuts.webp" width="1600" height="1000" loading="lazy" decoding="async"
+                 alt="The keyboard shortcuts dialog, grouped into Move around, Act on the selected one, Filter, and This page."></a>
+            <figcaption>Press <kbd>?</kbd>. For people who treat the mouse as a fallback.</figcaption>
+          </figure>
+          <figure class="shot shot-phone">
+            <a class="zoom" href="img/phone.webp"><img src="img/phone.webp" width="1170" height="1992" loading="lazy" decoding="async"
+                 alt="The phone layout: stacked application cards under Offer and Interviewing, with a horizontally scrolling stage strip."></a>
+            <figcaption>Same data, fewer columns.</figcaption>
+          </figure>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============ How it got built ============ -->
+  <section class="built" id="built" aria-labelledby="built-title">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 id="built-title">How it got built</h2>
+        <p>I didn't write this code. I directed six AI agents in Claude Code: a lead, an advisor model, and four builders working in parallel on the list and Today rail, the detail drawer, the theme editor and shortcuts, and the flow chart. I was the product owner. I decided what it was for and made the calls on layout, workflow and customization. I reviewed every screen and decided when it shipped.</p>
+      </div>
+
+      <ol class="timeline" aria-label="Timeline">
+        <li><time datetime="2026-11-16T21:12">Mon, Nov 16, 9:12 PM</time><span>First commit.</span></li>
+        <li><time datetime="2026-11-17T19:07">Tue, Nov 17, 7:07 PM</time><span>Redesign live.</span></li>
+        <li class="tl-total"><span class="tl-num">About 22 hours</span><span>on the wall clock. I'm not saying how many of them I slept.</span></li>
+      </ol>
+
+      <div class="split">
+        <div class="col col-me">
+          <h3>What I decided</h3>
+          <ul class="decisions">
+            <li><strong>The problem.</strong> Storing applications is solved; a spreadsheet does it. What's worth building is the presentation, the UX and the customization.</li>
+            <li><strong>The order.</strong> Where things stand comes first. What changed overnight comes second.</li>
+            <li><strong>The screen.</strong> Desktop first, then a phone layout.</li>
+            <li><strong>The look.</strong> Keep the original colors. Make every one of them customizable.</li>
+            <li><strong>The sync.</strong> Themes sync per device class: one for computers, one for phones.</li>
+            <li><strong>The surprise.</strong> A flow chart, added mid-build.</li>
+            <li><strong>The finish line.</strong> Every layout, workflow and customization call, every screen reviewed, and when it shipped.</li>
+          </ul>
+        </div>
+        <div class="col col-them">
+          <h3>What the agents did</h3>
+          <ul class="facts">
+            <li><span class="fact-num">~4,900</span><span>lines of front end. Plain ES modules, no framework, no build step.</span></li>
+            <li><span class="fact-num">~870</span><span>lines of Python. FastAPI and SQLite.</span></li>
+            <li><span class="fact-num">52</span><span>automated tests.</span></li>
+            <li><span class="fact-num">4</span><span>builders at once, plus a lead and an advisor.</span></li>
+          </ul>
+          <p class="aside">Also, every day after: Claude keeps the tracker current through its API, reading Gmail and logging each change on the timeline under its own name.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Run it yourself ============ -->
+  <section class="run" id="run" aria-labelledby="run-title">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 id="run-title">Run it yourself</h2>
+        <p>Three levels of commitment. Pick the lowest one that answers your question.</p>
+      </div>
+
+      <div class="tiers">
+        <article class="tier" aria-labelledby="t1">
+          <p class="tier-step">1</p>
+          <h3 id="t1">Try it here</h3>
+          <p>No steps. The demo is at the top of this page, running entirely in your browser.</p>
+          <a class="btn btn-secondary" href="#demo">Back to the demo</a>
+        </article>
+
+        <article class="tier tier-main" aria-labelledby="t2">
+          <p class="tier-step">2</p>
+          <h3 id="t2">Run the demo locally</h3>
+          <p>A few commands. You'll need <strong>Python 3.12 or newer</strong> and <strong>git</strong>. Demo mode uses made-up data that resets when you stop it.</p>
+
+          <!-- ===== LOCAL DEMO COMMANDS: single source of truth. Edit only here. ===== -->
+          <div class="os-tabs" data-tabs>
+            <div class="tablist" role="tablist" aria-label="Operating system">
+              <button type="button" role="tab" id="tab-unix" aria-controls="panel-unix" aria-selected="true">macOS / Linux</button>
+              <button type="button" role="tab" id="tab-win" aria-controls="panel-win" aria-selected="false" tabindex="-1">Windows PowerShell</button>
+            </div>
+
+            <div class="tabpanel" role="tabpanel" id="panel-unix" aria-labelledby="tab-unix" tabindex="0">
+              <ol class="cmds" data-prompt="$">
+                <li><pre><code>git clone https://github.com/mnmilford/job-tracker.git</code></pre></li>
+                <li><pre><code>cd job-tracker</code></pre></li>
+                <li><pre><code>python3 -m venv .venv</code></pre></li>
+                <li><pre><code>.venv/bin/pip install -r requirements.txt</code></pre></li>
+                <li><pre><code>DEMO_MODE=1 .venv/bin/uvicorn app.main:app --port 8300</code></pre></li>
+              </ol>
+            </div>
+
+            <div class="tabpanel" role="tabpanel" id="panel-win" aria-labelledby="tab-win" tabindex="0" hidden>
+              <ol class="cmds" data-prompt="PS&gt;">
+                <li><pre><code>git clone https://github.com/mnmilford/job-tracker.git</code></pre></li>
+                <li><pre><code>cd job-tracker</code></pre></li>
+                <li><pre><code>py -m venv .venv</code></pre></li>
+                <li><pre><code>.venv\Scripts\pip install -r requirements.txt</code></pre></li>
+                <li><pre><code>$env:DEMO_MODE="1"; .venv\Scripts\uvicorn app.main:app --port 8300</code></pre></li>
+              </ol>
+            </div>
+            <p class="then">Then open <a href="http://127.0.0.1:8300">http://127.0.0.1:8300</a>. Stop it with <kbd>Ctrl</kbd>+<kbd>C</kbd>.</p>
+          </div>
+          <!-- ===== END LOCAL DEMO COMMANDS ===== -->
+        </article>
+
+        <article class="tier" aria-labelledby="t3">
+          <p class="tier-step">3</p>
+          <h3 id="t3">Use it for real</h3>
+          <p>Your own server, a domain, HTTPS through Caddy, and a login in front of it with Authelia. A few more steps, all written down.</p>
+          <ul class="links">
+            <li><a href="https://github.com/mnmilford/job-tracker#run-it-yourself">README: Run it yourself</a></li>
+            <li><a href="https://github.com/mnmilford/job-tracker/blob/main/deploy/SETUP.md">deploy/SETUP.md: server setup</a></li>
+          </ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Fine print ============ -->
+  <section class="faq" id="faq" aria-labelledby="faq-title">
+    <div class="wrap">
+      <h2 id="faq-title">Fine print</h2>
+      <div class="qa-grid">
+        <div class="qa">
+          <h3>Will you fix bugs or add features?</h3>
+          <p>No. This is a portfolio piece. If it breaks, you get to keep both pieces. If you want a feature, fork it. The same AI agents are available to you, and they don't mind being sent back.</p>
+        </div>
+        <div class="qa">
+          <h3>Is any of the data real?</h3>
+          <p>None of it. Blockchain for Dogs, Unicorn Stables Inc., Kombucha Analytics and Synergy Dynamics are invented, and so is everyone else in the demo and the screenshots. My real job search lives in a database on my own server and stays there.</p>
+        </div>
+        <div class="qa">
+          <h3>Why not just use a spreadsheet?</h3>
+          <p>You can. Before this I used a markdown table, which stored everything fine. It just never told me what to do next.</p>
+        </div>
+        <div class="qa">
+          <h3>Did AI really write all of it?</h3>
+          <p>Yes. It's in the title. I defined the problem, made the calls on layout and workflow, reviewed every screen, and decided when it shipped. Whether that makes it slopware is your call. The demo is right up there.</p>
+        </div>
+        <div class="qa">
+          <h3>What's the license?</h3>
+          <p>The code is public on GitHub. The repo doesn't include a license file.</p>
+        </div>
+        <div class="qa">
+          <h3>Is there support?</h3>
+          <p>There is this paragraph.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-foot">
+  <div class="wrap foot-row">
+    <p class="foot-by">Built by Michael Milford. Typed by AI agents.</p>
+    <nav aria-label="Footer">
+      <a href="https://github.com/mnmilford/job-tracker">Code on GitHub</a>
+      <a href="#blog-post-link">Read the write-up</a><!-- TODO: blog post URL -->
+      <a href="#main">Back to top</a>
+    </nav>
+  </div>
+</footer>
+</body>
+</html>

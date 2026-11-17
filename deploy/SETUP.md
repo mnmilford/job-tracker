@@ -64,7 +64,9 @@ sudo sh -c 'umask 027; grep "^PROXY_SECRET=" /etc/job-tracker/job-tracker.env | 
 sudo chown root:caddy /etc/caddy/jobtracker-proxy-secret && sudo chmod 640 /etc/caddy/jobtracker-proxy-secret
 ```
 
-Copy the block from `deploy/Caddyfile.example` into your Caddyfile. It matches this droplet's Authelia: `127.0.0.1:9091`, served under the `/authelia` path prefix, so the endpoint is `/authelia/api/authz/forward-auth`. If yours listens elsewhere or at its own domain's root, change the address or drop the prefix. Then:
+> **No Authelia?** Use [`Caddyfile.basic-auth.example`](Caddyfile.basic-auth.example) instead, and Caddy asks for a username and password itself. Make the password hash with `caddy hash-password`, put your domain, username and hash in the block, then validate and reload as below and skip the Authelia part of this step. The README's [Run it yourself](../README.md#3-use-it-for-real) walks through it.
+
+For Authelia, copy the block from `deploy/Caddyfile.example` into your Caddyfile. It matches this droplet's Authelia: `127.0.0.1:9091`, served under the `/authelia` path prefix, so the endpoint is `/authelia/api/authz/forward-auth`. If yours listens elsewhere or at its own domain's root, change the address or drop the prefix. Then:
 
 ```bash
 sudo caddy validate --config /etc/caddy/Caddyfile

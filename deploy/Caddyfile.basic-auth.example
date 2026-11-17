@@ -1,0 +1,41 @@
+# The simple login: Caddy's built-in basic_auth, no Authelia needed.
+# Add this block to /etc/caddy/Caddyfile, then: sudo systemctl reload caddy
+#
+# Before you do:
+#   1. Change tracker.example.com to your domain.
+#   2. Change "you" to the username you want, and paste in a password hash
+#      made with: caddy hash-password
+#   3. Put the app's PROXY_SECRET in /etc/caddy/jobtracker-proxy-secret
+#      (README "Run it yourself", or deploy/SETUP.md step 5).
+tracker.example.com {
+	# Never pass along a secret header a client tried to send itself.
+	request_header -X-Proxy-Secret
+
+	# Agents send "Authorization: Bearer <token>". Basic auth uses that same
+	# header, so bearer requests get their own route that skips the login.
+	# They reach the app without the secret, and the app checks the token
+	# itself and rejects anything it doesn't know.
+	@agent header Authorization "Bearer *"
+	handle @agent {
+		reverse_proxy 127.0.0.1:8300
+	}
+
+	# Everyone else signs in with the username and password below. Give this
+	# site its own login; don't import a snippet shared with other apps, or
+	# their users get in here too. Only requests that got past it carry the
+	# secret the app requires.
+	handle {
+		basic_auth {
+			you <paste the hash from caddy hash-password here>
+		}
+		reverse_proxy 127.0.0.1:8300 {
+			header_up X-Proxy-Secret {file./etc/caddy/jobtracker-proxy-secret}
+		}
+	}
+
+	header {
+		X-Robots-Tag "noindex, nofollow"
+		Referrer-Policy "same-origin"
+		X-Content-Type-Options "nosniff"
+	}
+}

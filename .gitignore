@@ -11,3 +11,6 @@ data/
 !deploy/job-tracker.env.example
 export*.json
 .ssh/
+
+# Built landing site (scripts/build_site.py)
+_site/

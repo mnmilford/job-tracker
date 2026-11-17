@@ -114,8 +114,10 @@
 /* ---------- Timeline ---------- */
 .dr-compose { display: grid; gap: var(--sp-2); }
 .dr-compose textarea { min-height: var(--control-h); resize: none; field-sizing: content; max-height: 40vh; }
-.dr-compose-row { display: none; align-items: center; gap: var(--sp-2); }
-.dr-compose:focus-within .dr-compose-row, .dr-compose.has-text .dr-compose-row { display: flex; }
+/* The row keeps its space while hidden: collapsing it on blur moved the timeline
+   up between mousedown and mouseup, so the first click below the composer missed. */
+.dr-compose-row { display: flex; visibility: hidden; align-items: center; gap: var(--sp-2); }
+.dr-compose:focus-within .dr-compose-row, .dr-compose.has-text .dr-compose-row { visibility: visible; }
 .dr-compose-row .form-msg { flex: 1; min-width: 0; }
 .dr-compose-row .dr-date { flex: none; }
 .dr-hint { display: inline-flex; align-items: center; gap: calc(var(--space) * 0.5); font-size: var(--fs-xs); white-space: nowrap; }

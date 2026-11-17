@@ -46,8 +46,9 @@ function say(text, error = false) { msgEl.hidden = false; msgEl.textContent = te
 
 async function pdfjs() {
   if (!lib) {
-    lib = await import("/static/vendor/pdfjs/pdf.min.js");
-    lib.GlobalWorkerOptions.workerSrc = "/static/vendor/pdfjs/pdf.worker.min.js";
+    // Relative to this module, so it also works when the app is served under a subpath (the Pages demo).
+    lib = await import(new URL("../../vendor/pdfjs/pdf.min.js", import.meta.url).href);
+    lib.GlobalWorkerOptions.workerSrc = new URL("../../vendor/pdfjs/pdf.worker.min.js", import.meta.url).href;
   }
   return lib;
 }

@@ -10,6 +10,7 @@ Self-hosted job-application tracker (FastAPI + SQLite + one static page). Public
 - Keep the front end build-free: `app/static/index.html` loads `tokens.css`, `app.css`, `css/*.css` and the ES module `app.js`, which imports `js/core/*` (data layer: every write goes through `js/core/actions.js`) and `js/ui/*` (one module per surface). No bundler, no npm packages, no CDN.
 - Component CSS uses tokens only (`var(--…)` from `tokens.css`), never raw colors or px spacing/font sizes: the Appearance panel lets the user change all of them.
 - Business rules belong in `app/tracker.py`, not in routes or the front end.
+- `site/` is the public landing page + click-around demo on GitHub Pages (`.github/workflows/pages.yml`). `scripts/build_site.py` copies `app/static` in unchanged and injects `site/demo/mock-api.js`, which answers `/api/*` in the browser and mirrors the write rules in `tracker.py`: change one, change the other. Front-end paths must stay relative (the demo lives under `/job-tracker/`); `tests/test_site.py` checks. Demo data (`site/demo/dataset.json`) is invented, like `demo/seed.json`.
 
 ## Auth model (don't weaken it)
 

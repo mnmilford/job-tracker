@@ -1,0 +1,522 @@
+{
+ "format": "job-tracker/1",
+ "asOf": "2026-11-17",
+ "meta": {
+  "inbox_checked": "2026-11-16",
+  "inbox_review": [
+   "Vaporware Ventures: recruiter wrote 'let's circle back' with no date. Is that a recruiter screen, or a vibe?"
+  ]
+ },
+ "applications": [
+  {
+   "kind": "active",
+   "found": "2026-10-20",
+   "company": "Unicorn Stables Inc.",
+   "role": "Head of Customer Support",
+   "status": "Offer",
+   "comp": "$172K + equity",
+   "source": "Referral",
+   "next_step": "Decide by 2026-11-21",
+   "lesson": "",
+   "verdict": "match. Leadership role at a company whose logo is a horse with a horn.",
+   "timeline": [
+    {
+     "date": "2026-10-20",
+     "text": "Added as Applied",
+     "kind": "status",
+     "source": "claude"
+    },
+    {
+     "date": "2026-10-27",
+     "text": "Status: Applied → Recruiter screen",
+     "kind": "status",
+     "source": "claude"
+    },
+    {
+     "date": "2026-11-03",
+     "text": "Status: Recruiter screen → Interviewing",
+     "kind": "status",
+     "source": "claude"
+    },
+    {
+     "date": "2026-11-16",
+     "text": "Status: Interviewing → Offer",
+     "kind": "status",
+     "source": "claude"
+    }
+   ]
+  },
+  {
+   "kind": "active",
+   "found": "2026-11-02",
+   "company": "Synergy Dynamics",
+   "role": "Technical Account Manager",
+   "status": "Interviewing",
+   "comp": "$140–155K",
+   "source": "Greenhouse",
+   "next_step": "Panel interview 2026-11-19 13:00 CT",
+   "lesson": "",
+   "verdict": "stretch. They said 'synergy' 14 times in the job post.",
+   "timeline": [
+    {
+     "date": "2026-11-02",
+     "text": "Added as Applied",
+     "kind": "status",
+     "source": "claude"
+    },
+    {
+     "date": "2026-11-09",
+     "text": "Status: Applied → Recruiter screen",
+     "kind": "status",
+     "source": "claude"
+    },
+    {
+     "date": "2026-11-13",
+     "text": "Status: Recruiter screen → Interviewing",
+     "kind": "status",
+     "source": "claude"
+    },
+    {
+     "date": "2026-11-13",
+     "text": "Recruiter: 'the panel is just a vibe check'",
+     "kind": "note",
+     "source": "claude"
+    }
+   ]
+  },
+  {
+   "kind": "active",
+   "found": "2026-11-05",
+   "company": "Yak Shaving Co.",
+   "role": "Support Operations Lead",
+   "status": "Interviewing",
+   "comp": "$128K",
+   "source": "Ashby",
+   "next_step": "Take-home due 2026-11-20",
+   "lesson": "",
+   "verdict": "",
+   "timeline": [
+    {
+     "date": "2026-11-05",
+     "text": "Added as Applied",
+     "kind": "status",
+     "source": "claude"
+    },
+    {
+     "date": "2026-11-12",
+     "text": "Status: Applied → Interviewing",
+     "kind": "status",
+     "source": "claude"
+    }
+   ]
+  },
+  {
+   "kind": "active",
+   "found": "2026-11-04",
+   "company": "Kombucha Analytics",
+   "role": "Customer Success Engineer",
+   "status": "Recruiter screen",
+   "comp": "$118K",
+   "source": "Lever",
+   "next_step": "Send availability by 2026-11-14",
+   "lesson": "",
+   "verdict": "",
+   "timeline": [
+    {
+     "date": "2026-11-04",
+     "text": "Added as Applied",
+     "kind": "status",
+     "source": "claude"
+    },
+    {
+     "date": "2026-11-10",
+     "text": "Status: Applied → Recruiter screen",
+     "kind": "status",
+     "source": "claude"
+    }
+   ]
+  },
+  {
+   "kind": "active",
+   "found": "2026-11-08",
+   "company": "Acme Cloud Cloud",
+   "role": "Implementation Consultant",
+   "status": "Recruiter screen",
+   "comp": "$122K",
+   "source": "Workday",
+   "next_step": "Screen 2026-11-18 10:00 CT",
+   "lesson": "",
+   "verdict": "",
+   "timeline": [
+    {
+     "date": "2026-11-08",
+     "text": "Added as Applied",
+     "kind": "status",
+     "source": "claude"
+    },
+    {
+     "date": "2026-11-15",
+     "text": "Status: Applied → Recruiter screen",
+     "kind": "status",
+     "source": "claude"
+    }
+   ]
+  },
+  {
+   "kind": "active",
+   "found": "2026-10-28",
+   "company": "Vaporware Ventures",
+   "role": "Solutions Architect",
+   "status": "Applied",
+   "comp": "$150K (they said 'competitive')",
+   "source": "Company site",
+   "next_step": "",
+   "lesson": "",
+   "verdict": "",
+   "timeline": [
+    {
+     "date": "2026-10-28",
+     "text": "Added as Applied",
+     "kind": "status",
+     "source": "claude"
+    }
+   ]
+  },
+  {
+   "kind": "active",
+   "found": "2026-11-10",
+   "company": "Hyperscale Hot Dogs",
+   "role": "CRM Architect",
+   "status": "Applied",
+   "comp": "$135K",
+   "source": "LinkedIn",
+   "next_step": "Follow up if no response by 2026-11-24",
+   "lesson": "",
+   "verdict": "",
+   "timeline": [
+    {
+     "date": "2026-11-10",
+     "text": "Added as Applied",
+     "kind": "status",
+     "source": "claude"
+    }
+   ]
+  },
+  {
+   "kind": "active",
+   "found": "2026-11-14",
+   "company": "Series Z Robotics",
+   "role": "Support Engineering Manager",
+   "status": "Applied",
+   "comp": "$160K",
+   "source": "Referral",
+   "next_step": "",
+   "lesson": "",
+   "verdict": "",
+   "timeline": [
+    {
+     "date": "2026-11-14",
+     "text": "Added as Applied",
+     "kind": "status",
+     "source": "claude"
+    }
+   ]
+  },
+  {
+   "kind": "active",
+   "found": "2026-11-16",
+   "company": "Artisanal Spreadsheets LLC",
+   "role": "Zoho Architect",
+   "status": "Drafting",
+   "comp": "",
+   "source": "Recruiter",
+   "next_step": "Finish the cover letter. Make it sound less like a cover letter.",
+   "lesson": "",
+   "verdict": "",
+   "timeline": [
+    {
+     "date": "2026-11-16",
+     "text": "Added as Drafting",
+     "kind": "status",
+     "source": "claude"
+    }
+   ]
+  },
+  {
+   "kind": "closed",
+   "found": "2026-09-02",
+   "company": "Blockchain for Dogs",
+   "role": "Head of Support",
+   "status": "Rejected (2026-09-12)",
+   "comp": "",
+   "source": "Greenhouse",
+   "next_step": "",
+   "lesson": "Wanted 10 years of experience in a 4-year-old framework.",
+   "verdict": "",
+   "timeline": [
+    {
+     "date": "2026-09-02",
+     "text": "Added as Applied",
+     "kind": "status",
+     "source": "claude"
+    },
+    {
+     "date": "2026-09-12",
+     "text": "Status: Applied → Rejected",
+     "kind": "status",
+     "source": "claude"
+    }
+   ]
+  },
+  {
+   "kind": "closed",
+   "found": "2026-08-18",
+   "company": "Pivot Labs",
+   "role": "Technical Account Manager",
+   "status": "Withdrawn (2026-09-05)",
+   "comp": "$145K",
+   "source": "Ashby",
+   "next_step": "",
+   "lesson": "Third round take-home was the whole product. Politely declined to build their startup for free.",
+   "verdict": "",
+   "timeline": [
+    {
+     "date": "2026-08-18",
+     "text": "Added as Applied",
+     "kind": "status",
+     "source": "claude"
+    },
+    {
+     "date": "2026-08-25",
+     "text": "Status: Applied → Recruiter screen",
+     "kind": "status",
+     "source": "claude"
+    },
+    {
+     "date": "2026-08-29",
+     "text": "Status: Recruiter screen → Interviewing",
+     "kind": "status",
+     "source": "claude"
+    },
+    {
+     "date": "2026-09-05",
+     "text": "Status: Interviewing → Withdrawn",
+     "kind": "status",
+     "source": "claude"
+    }
+   ]
+  },
+  {
+   "kind": "closed",
+   "found": "2026-08-01",
+   "company": "Disruptive Mattress Co.",
+   "role": "Support Engineer",
+   "status": "Ghosted",
+   "comp": "",
+   "source": "LinkedIn",
+   "next_step": "",
+   "lesson": "Applied, then silence. They're very good at sleep.",
+   "verdict": "",
+   "timeline": []
+  },
+  {
+   "kind": "closed",
+   "found": "2026-09-15",
+   "company": "Quantum Toaster",
+   "role": "Customer Success Lead",
+   "status": "Rejected (2026-10-20)",
+   "comp": "$130K",
+   "source": "Lever",
+   "next_step": "",
+   "lesson": "Lost to an internal candidate. The toaster stays in the family.",
+   "verdict": "",
+   "timeline": [
+    {
+     "date": "2026-09-15",
+     "text": "Added as Applied",
+     "kind": "status",
+     "source": "claude"
+    },
+    {
+     "date": "2026-09-22",
+     "text": "Status: Applied → Recruiter screen",
+     "kind": "status",
+     "source": "claude"
+    },
+    {
+     "date": "2026-10-02",
+     "text": "Status: Recruiter screen → Interviewing",
+     "kind": "status",
+     "source": "claude"
+    },
+    {
+     "date": "2026-10-20",
+     "text": "Status: Interviewing → Rejected",
+     "kind": "status",
+     "source": "claude"
+    }
+   ]
+  },
+  {
+   "kind": "closed",
+   "found": "2026-04-03",
+   "company": "Very Real Startup",
+   "role": "Implementation Manager",
+   "status": "Hired (2026-05-01)",
+   "comp": "",
+   "source": "Referral",
+   "next_step": "",
+   "lesson": "Offer came through a referral. Those still work.",
+   "verdict": "",
+   "timeline": [
+    {
+     "date": "2026-04-03",
+     "text": "Added as Applied",
+     "kind": "status",
+     "source": "claude"
+    },
+    {
+     "date": "2026-04-10",
+     "text": "Status: Applied → Interviewing",
+     "kind": "status",
+     "source": "claude"
+    },
+    {
+     "date": "2026-04-24",
+     "text": "Status: Interviewing → Offer",
+     "kind": "status",
+     "source": "claude"
+    },
+    {
+     "date": "2026-05-01",
+     "text": "Status: Offer → Hired",
+     "kind": "status",
+     "source": "claude"
+    }
+   ]
+  },
+  {
+   "kind": "closed",
+   "found": "2026-10-01",
+   "company": "Definitely Not A Cult Wellness",
+   "role": "Support Operations Manager",
+   "status": "Withdrawn (2026-10-08)",
+   "comp": "",
+   "source": "Company site",
+   "next_step": "",
+   "lesson": "Interview was at a retreat. Mandatory. In the woods.",
+   "verdict": "",
+   "timeline": [
+    {
+     "date": "2026-10-01",
+     "text": "Added as Applied",
+     "kind": "status",
+     "source": "claude"
+    },
+    {
+     "date": "2026-10-08",
+     "text": "Status: Applied → Withdrawn",
+     "kind": "status",
+     "source": "claude"
+    }
+   ]
+  },
+  {
+   "kind": "closed",
+   "found": "2026-07-12",
+   "company": "Legacy Fax Solutions",
+   "role": "Technical Support Manager",
+   "status": "Rejected (2026-07-30)",
+   "comp": "",
+   "source": "Indeed",
+   "next_step": "",
+   "lesson": "Form rejection. Arrived by fax.",
+   "verdict": "",
+   "timeline": []
+  },
+  {
+   "kind": "closed",
+   "found": "2026-10-10",
+   "company": "Web3 Web4 Web5",
+   "role": "Head of Support",
+   "status": "Ghosted",
+   "comp": "",
+   "source": "Wellfound",
+   "next_step": "",
+   "lesson": "Recruiter screen went great. Then the company may have stopped existing.",
+   "verdict": "",
+   "timeline": [
+    {
+     "date": "2026-10-10",
+     "text": "Added as Applied",
+     "kind": "status",
+     "source": "claude"
+    },
+    {
+     "date": "2026-10-16",
+     "text": "Status: Applied → Recruiter screen",
+     "kind": "status",
+     "source": "claude"
+    },
+    {
+     "date": "2026-11-05",
+     "text": "Status: Recruiter screen → Ghosted",
+     "kind": "status",
+     "source": "claude"
+    }
+   ]
+  },
+  {
+   "kind": "closed",
+   "found": "2026-09-20",
+   "company": "Gluten-Free Cloud",
+   "role": "CRM Consultant",
+   "status": "Rejected (2026-10-01)",
+   "comp": "",
+   "source": "Greenhouse",
+   "next_step": "",
+   "lesson": "Wanted Salesforce admin experience. Tried to explain Zoho. They nodded.",
+   "verdict": "",
+   "timeline": [
+    {
+     "date": "2026-09-20",
+     "text": "Added as Applied",
+     "kind": "status",
+     "source": "claude"
+    },
+    {
+     "date": "2026-10-01",
+     "text": "Status: Applied → Rejected",
+     "kind": "status",
+     "source": "claude"
+    }
+   ]
+  },
+  {
+   "kind": "history",
+   "found": "",
+   "company": "Spreadsheet Era Inc.",
+   "role": "Solutions Architect",
+   "status": "",
+   "comp": "",
+   "source": "",
+   "next_step": "",
+   "lesson": "From the old tracker. Status lost to the sands of time.",
+   "verdict": "",
+   "timeline": []
+  },
+  {
+   "kind": "history",
+   "found": "",
+   "company": "Mystery Co.",
+   "role": "Senior TAM",
+   "status": "",
+   "comp": "",
+   "source": "",
+   "next_step": "",
+   "lesson": "I genuinely do not remember applying here.",
+   "verdict": "",
+   "timeline": []
+  }
+ ]
+}

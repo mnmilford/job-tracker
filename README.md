@@ -25,7 +25,7 @@ GitHub Actions: tests on every push; on main, deploy over SSH with a forced-comm
 ```
 
 - **Backend:** Python, FastAPI, SQLite. No ORM; the schema is three tables (`app/db.py`). One connection per request, WAL mode, and `BEGIN IMMEDIATE` writes, so overlapping writes (an agent syncing while you edit on your phone) queue up instead of colliding. There's a test for exactly that.
-- **Front end:** one HTML page and plain ES modules, no build step and no dependencies. `tokens.css` holds every color, size and spacing value as a CSS variable (the Appearance panel overrides them); `app.css` has the shared primitives; `js/core/` is the data layer (API client, model, polling, change tracking, every write) and `js/ui/` has one module per surface (list, rail, drawer, status menu, quick add, PDF viewer, flow chart, appearance, shortcuts). PDF.js 4.10.38 (Apache-2.0) is vendored in `app/static/vendor/pdfjs` and loaded only when a PDF is opened.
+- **Front end:** one HTML page and plain ES modules, no build step and no dependencies. `tokens.css` holds every color, size and spacing value as a CSS variable (the Appearance panel overrides them); `app.css` has the shared primitives and `css/` one stylesheet per surface; `js/core/` is the data layer (API client, model, polling, change tracking, every write) and `js/ui/` has one module per surface (list, rail, drawer, status menu, quick add, PDF viewer, flow chart, appearance, shortcuts). PDF.js 4.10.38 (Apache-2.0) is vendored in `app/static/vendor/pdfjs` and loaded only when a PDF is opened.
 - **Rules live in one place** (`app/tracker.py`): moving between in-progress and closed, stamping outcome dates, keeping the timeline, all-or-nothing imports.
 
 ### Security model
@@ -55,11 +55,146 @@ GitHub Actions: tests on every push; on main, deploy over SSH with a forced-comm
 | GET | `/api/export` | Full JSON backup |
 | POST | `/api/import` | Replace everything from an export (token only) |
 
-## Run it locally
+## Run it yourself
+
+Go as far as you like: look at the demo, run it on your own computer, or set it up for your own job search.
+
+### 1. Try it in your browser
+
+Open the hosted demo: https://mnmilford.github.io/job-tracker/. It runs on made-up data, so click anything.
+
+### 2. Run the demo on your computer
+
+Takes about 2 minutes. You need **Python 3.12 or newer** (it's what the tests run on) and **git**.
+
+**macOS or Linux**
+
+1. Get the code:
+   ```bash
+   git clone https://github.com/mnmilford/job-tracker.git
+   ```
+   ```bash
+   cd job-tracker
+   ```
+2. Make a virtual environment and install the two dependencies (FastAPI and uvicorn):
+   ```bash
+   python3 -m venv .venv
+   ```
+   ```bash
+   .venv/bin/pip install -r requirements.txt
+   ```
+3. Start it in demo mode:
+   ```bash
+   DEMO_MODE=1 .venv/bin/uvicorn app.main:app --port 8300
+   ```
+4. Open http://127.0.0.1:8300.
+
+**Windows (PowerShell)**
+
+1. Get the code:
+   ```powershell
+   git clone https://github.com/mnmilford/job-tracker.git
+   ```
+   ```powershell
+   cd job-tracker
+   ```
+2. Make a virtual environment and install the dependencies:
+   ```powershell
+   py -m venv .venv
+   ```
+   ```powershell
+   .venv\Scripts\pip install -r requirements.txt
+   ```
+3. Start it in demo mode:
+   ```powershell
+   $env:DEMO_MODE="1"; .venv\Scripts\uvicorn app.main:app --port 8300
+   ```
+4. Open http://127.0.0.1:8300.
+
+You'll see the tracker filled with a dozen or so fake applications. Change statuses, edit things, try the flow chart and the Appearance panel. Demo mode has no login and keeps nothing: every restart brings back the same fake data. To stop it, press `Ctrl+C` in the terminal.
+
+### 3. Use it for real
+
+For your own job search, run it on a small Linux server, so you can reach it from your phone too. The cheapest VPS is plenty. The app has no open mode: it only answers requests that a reverse proxy let through after a login, or that carry an API token. The simplest login is Caddy's built-in basic auth (a username and password the browser asks for), which is what these steps use.
+
+You need: a server running Ubuntu 24.04 (it ships Python 3.12), a domain or subdomain you can point at it, and ports 80 and 443 open.
+
+1. **Point your domain at the server.** Add an `A` record for, say, `tracker.example.com` with the server's IP address. Caddy gets the HTTPS certificate on its own once this resolves.
+
+2. **Install Caddy** from its official package: https://caddyserver.com/docs/install#debian-ubuntu-raspbian
+
+3. **Install the app as its own service.** Follow steps 2, 3 and 4 of [`deploy/SETUP.md`](deploy/SETUP.md). They make a `jobtracker` user, put the code in `/opt/job-tracker`, keep the data in `/var/lib/job-tracker`, and start a systemd service on `127.0.0.1:8300`. In step 3 you fill in `/etc/job-tracker/job-tracker.env`:
+   - `PROXY_SECRET`: a random string Caddy will add to every request that got past the login. Make one with:
+     ```bash
+     python3 -c "import secrets; print(secrets.token_urlsafe(32))"
+     ```
+     It has to be at least 32 characters, or the app refuses to start.
+   - `OWNER_NAME`: your name, shown in the page header.
+   - `API_TOKENS`: optional, for AI agents and for importing data (see step 6 and the next section). The format is `name:token`, comma-separated. Tokens shorter than 32 characters are silently ignored, so make them with the same command.
+   - `DOCS_REPO_URL` and `DOCS_GITHUB_TOKEN`: leave empty unless you keep your resumes in a GitHub repo ([`SETUP.md`](deploy/SETUP.md) step 9).
+
+   Check that it's up: `curl -s http://127.0.0.1:8300/healthz` should print `{"ok":true}`.
+
+4. **Give Caddy the same secret.** This copies `PROXY_SECRET` from the app's settings into a file only Caddy can read:
+   ```bash
+   sudo sh -c 'umask 027; grep "^PROXY_SECRET=" /etc/job-tracker/job-tracker.env | cut -d= -f2- | tr -d "\n" > /etc/caddy/jobtracker-proxy-secret'
+   ```
+   ```bash
+   sudo chown root:caddy /etc/caddy/jobtracker-proxy-secret && sudo chmod 640 /etc/caddy/jobtracker-proxy-secret
+   ```
+
+5. **Set up the login.** Pick a password and hash it (Caddy asks for it twice and prints a hash that starts with `$2a$`):
+   ```bash
+   caddy hash-password
+   ```
+   Then open `/etc/caddy/Caddyfile`, paste in the block from [`deploy/Caddyfile.basic-auth.example`](deploy/Caddyfile.basic-auth.example), and change three things: the domain, the username, and the hash. If the server runs nothing else, replace the whole file with that block. Check it and load it:
+   ```bash
+   sudo caddy validate --config /etc/caddy/Caddyfile
+   ```
+   ```bash
+   sudo systemctl reload caddy
+   ```
+   Open `https://tracker.example.com`. Your browser asks for the username and password, then shows an empty tracker. From the command line, `curl -s -o /dev/null -w '%{http_code}\n' https://tracker.example.com/` should print `401`, and so should `curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8300/api/dashboard` on the server (no secret, no entry).
+
+6. **Add your applications.** Either start empty and add them from the page, or load a file. Import replaces everything, so it only works with an API token. The file uses the format of [`demo/seed.json`](demo/seed.json), which is also what `GET /api/export` gives back:
+   ```bash
+   curl -X POST https://tracker.example.com/api/import \
+     -H "Authorization: Bearer $TOKEN" \
+     -H "Content-Type: application/json" \
+     --data @my-applications.json
+   ```
+   Here `$TOKEN` is one of your `API_TOKENS` (run `TOKEN=<your token>` first).
+
+From here, [`deploy/SETUP.md`](deploy/SETUP.md) covers the rest: nightly backups (step 8), automatic deploys from your own fork with GitHub Actions (step 6), and the hardened systemd unit. To pull in updates by hand, run `sudo -u jobtracker /opt/job-tracker/deploy/remote-deploy.sh`. If you want a nicer login page, remember-me sessions, or one login across several of your apps, SETUP.md step 5 puts [Authelia](https://www.authelia.com/) in front instead of basic auth. That's how my own copy runs.
+
+### 4. Connect an AI agent (optional)
+
+Agents use the same API as the page, with a bearer token instead of the login. Put a token in `API_TOKENS` in `/etc/job-tracker/job-tracker.env` (for example `API_TOKENS=claude:<token>`), then `sudo systemctl restart job-tracker`. The name before the colon is what shows on the timeline next to every change the agent makes. Caddy sends bearer requests straight to the app, which checks the token itself.
+
+In these examples, `$TOKEN` is that token (run `TOKEN=<your token>` first).
+
+Add an application:
+
+```bash
+curl -X POST https://tracker.example.com/api/applications \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"company": "Acme", "role": "Support Engineer", "status": "Applied"}'
+```
+
+Read everything the page shows:
+
+```bash
+curl https://tracker.example.com/api/dashboard -H "Authorization: Bearer $TOKEN"
+```
+
+The [API](#api) table above lists every endpoint. Keep the token somewhere safe, like a password manager: anyone with it can read and change your tracker.
+
+### Working on the code
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt
-DEMO_MODE=1 .venv/bin/uvicorn app.main:app --reload --port 8300   # http://127.0.0.1:8300, fake data
+DEMO_MODE=1 .venv/bin/uvicorn app.main:app --reload --port 8300   # reloads when you edit
 .venv/bin/pytest -q
 ```
 
@@ -67,4 +202,4 @@ DEMO_MODE=1 .venv/bin/uvicorn app.main:app --reload --port 8300   # http://127.0
 
 ## Deploy
 
-See [`deploy/SETUP.md`](deploy/SETUP.md): one-time droplet setup (user, systemd, Caddy and Authelia, deploy key), then pushes to `main` deploy themselves after the tests pass.
+The short version, with a basic-auth login, is in [Run it yourself](#3-use-it-for-real). [`deploy/SETUP.md`](deploy/SETUP.md) has the full one-time server setup (user, systemd, Caddy and Authelia, deploy key), after which pushes to `main` deploy themselves once the tests pass.
