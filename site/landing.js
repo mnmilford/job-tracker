@@ -1,5 +1,5 @@
 // Landing page behavior: load the demo iframe on wide screens only,
-// copy buttons on the command blocks, and the OS tabs.
+// copy buttons on the command blocks, the screenshot viewer, and the OS tabs.
 (function () {
   'use strict';
 
@@ -64,6 +64,104 @@
     });
     li.appendChild(btn);
   });
+
+  // ---- Screenshot viewer ----
+  // Every screenshot is a link to its full-size file, which still works without
+  // JavaScript. With it, a click opens this viewer instead: arrows (and the
+  // arrow keys, and swipes) step through every screenshot on the page.
+  var zooms = Array.prototype.slice.call(document.querySelectorAll('a.zoom'));
+  if (zooms.length && typeof HTMLDialogElement === 'function') {
+    var arrow = function (d) {
+      return '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="' + d + '" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    };
+    var lb = document.createElement('dialog');
+    lb.className = 'lightbox';
+    lb.setAttribute('aria-label', 'Screenshot viewer');
+    lb.innerHTML =
+      '<div class="lb-top"><p class="lb-count" aria-live="polite"></p>' +
+      '<a class="lb-full" target="_blank" rel="noopener">Full size</a>' +
+      '<button type="button" class="lb-btn lb-close" aria-label="Close">' + arrow('M6 6l12 12M18 6L6 18') + '</button></div>' +
+      '<figure class="lb-figure"><img class="lb-img" alt=""><figcaption class="lb-cap"></figcaption></figure>' +
+      '<button type="button" class="lb-btn lb-nav lb-prev" aria-label="Previous screenshot">' + arrow('M15 5l-7 7 7 7') + '</button>' +
+      '<button type="button" class="lb-btn lb-nav lb-next" aria-label="Next screenshot">' + arrow('M9 5l7 7-7 7') + '</button>';
+    document.body.appendChild(lb);
+    var img = lb.querySelector('.lb-img');
+    var cap = lb.querySelector('.lb-cap');
+    var count = lb.querySelector('.lb-count');
+    var full = lb.querySelector('.lb-full');
+    var current = 0;
+
+    var show = function (i) {
+      current = (i + zooms.length) % zooms.length;
+      var a = zooms[current];
+      var thumb = a.querySelector('img');
+      var fig = a.closest('figure');
+      var fc = fig && fig.querySelector('figcaption');
+      img.classList.remove('lb-in');
+      img.src = a.getAttribute('href');
+      img.alt = thumb ? thumb.alt : '';
+      if (thumb && thumb.getAttribute('width')) {
+        img.width = thumb.getAttribute('width');
+        img.height = thumb.getAttribute('height');
+      }
+      cap.innerHTML = '';
+      if (fc) Array.prototype.forEach.call(fc.childNodes, function (n) { cap.appendChild(n.cloneNode(true)); });
+      cap.hidden = !fc;
+      count.textContent = (current + 1) + ' / ' + zooms.length;
+      full.href = a.getAttribute('href');
+      // Warm up the neighbours so arrowing through is instant.
+      [current - 1, current + 1].forEach(function (j) {
+        var n = zooms[(j + zooms.length) % zooms.length];
+        new Image().src = n.getAttribute('href');
+      });
+      requestAnimationFrame(function () { img.classList.add('lb-in'); });
+    };
+    var open = function (i) {
+      show(i);
+      if (!lb.open) lb.showModal();
+      document.documentElement.classList.add('lb-open');
+    };
+
+    zooms.forEach(function (a, i) {
+      a.addEventListener('click', function (e) {
+        // Let cmd/ctrl/shift/middle clicks open the file as usual.
+        if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        e.preventDefault();
+        open(i);
+      });
+    });
+    lb.querySelector('.lb-prev').addEventListener('click', function () { show(current - 1); });
+    lb.querySelector('.lb-next').addEventListener('click', function () { show(current + 1); });
+    lb.querySelector('.lb-close').addEventListener('click', function () { lb.close(); });
+    lb.addEventListener('close', function () {
+      document.documentElement.classList.remove('lb-open');
+      var a = zooms[current];
+      if (a) a.focus({ preventScroll: true });
+    });
+    // A click on the dark area around the picture closes it.
+    lb.addEventListener('click', function (e) {
+      var t = e.target;
+      if (t === lb || t.classList.contains('lb-figure') || t.classList.contains('lb-top')) lb.close();
+    });
+    lb.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowRight') { e.preventDefault(); show(current + 1); }
+      else if (e.key === 'ArrowLeft') { e.preventDefault(); show(current - 1); }
+      else if (e.key === 'Home') { e.preventDefault(); show(0); }
+      else if (e.key === 'End') { e.preventDefault(); show(zooms.length - 1); }
+    });
+    // Swipe left or right on touch screens.
+    var startX = null, startY = null;
+    lb.addEventListener('pointerdown', function (e) {
+      if (e.pointerType === 'mouse') return;
+      startX = e.clientX; startY = e.clientY;
+    });
+    lb.addEventListener('pointerup', function (e) {
+      if (startX === null) return;
+      var dx = e.clientX - startX, dy = e.clientY - startY;
+      startX = null;
+      if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) show(current + (dx < 0 ? 1 : -1));
+    });
+  }
 
   // ---- OS tabs (WAI-ARIA tabs pattern) ----
   Array.prototype.forEach.call(document.querySelectorAll('[data-tabs]'), function (root) {
