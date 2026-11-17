@@ -61,7 +61,7 @@ Go as far as you like: look at the demo, run it on your own computer, or set it 
 
 ### 1. Try it in your browser
 
-Open the hosted demo: https://mnmilford.github.io/job-tracker/. It runs on made-up data, so click anything.
+Open the hosted demo: https://labs.thezdev.com/job-tracker/. It runs on made-up data, so click anything.
 
 ### 2. Run the demo on your computer
 
