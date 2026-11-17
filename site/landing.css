@@ -139,6 +139,15 @@ kbd {
 .brand { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; font-weight: 650; font-size: 15px; letter-spacing: -0.01em; }
 .brand:hover { color: var(--ink); }
 .brand-mark { width: 24px; height: 24px; }
+/* Breadcrumb back to labs.thezdev.com, the home of all the builds. */
+.crumbs { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.crumb-labs {
+  display: inline-flex; align-items: center; gap: 8px; margin-left: -8px; padding: 4px 8px; border-radius: var(--radius);
+  color: var(--ink-2); text-decoration: none; font-size: 14px; font-weight: 600;
+}
+.crumb-labs:hover { color: var(--ink); background: var(--hover); }
+.labs-mark { width: 22px; height: 22px; border-radius: 6px; background: #3a7d7b; color: #fff; display: grid; place-items: center; font-size: 13px; font-weight: 700; line-height: 1; }
+.crumb-sep { color: var(--muted); opacity: 0.6; }
 .head-nav { display: flex; gap: 4px; margin-left: auto; }
 .head-nav a { color: var(--ink-2); text-decoration: none; font-size: 14px; padding: 6px 10px; border-radius: var(--radius); }
 .head-nav a:hover { color: var(--ink); background: var(--hover); }
