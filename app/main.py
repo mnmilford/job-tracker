@@ -15,6 +15,19 @@ from .config import Settings
 from .db import connect
 
 STATIC = Path(__file__).parent / "static"
+
+
+class RevalidatedStatic(StaticFiles):
+    """Static files that browsers re-check on every load (cheap: the ETag turns
+    it into a 304). The front end is many ES modules at fixed URLs, so without
+    this a browser could pair a fresh index.html with a stale cached module after
+    a deploy. The vendored PDF.js never changes and can be cached for a day."""
+
+    async def get_response(self, path, scope):
+        response = await super().get_response(path, scope)
+        if response.status_code in (200, 304):
+            response.headers["Cache-Control"] = "public, max-age=86400" if path.startswith("vendor/") else "no-cache"
+        return response
 DEMO_SEED = Path(__file__).parent.parent / "demo" / "seed.json"
 
 
@@ -93,7 +106,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def index(_: str = Depends(caller)):
         return FileResponse(STATIC / "index.html", headers={"Cache-Control": "no-cache"})
 
-    app.mount("/static", StaticFiles(directory=STATIC), name="static")
+    app.mount("/static", RevalidatedStatic(directory=STATIC), name="static")
 
     # ---- reads ----
     @app.get("/api/dashboard")
@@ -144,6 +157,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.put("/api/inbox")
     def put_inbox(data: dict = Body(...), _: str = Depends(writer), conn=Depends(db)):
         return tracker.set_inbox(conn, data.get("checked"), data.get("review"))
+
+    @app.get("/api/prefs")
+    def get_prefs(_: str = Depends(caller), conn=Depends(db)):
+        return tracker.get_prefs(conn)
+
+    @app.put("/api/prefs/{slot}")
+    def put_prefs(slot: str, data: dict = Body(...), _: str = Depends(writer), conn=Depends(db)):
+        return tracker.set_prefs(conn, slot, data.get("prefs"))
 
     @app.post("/api/import")
     def do_import(data: dict = Body(...), who: str = Depends(writer), conn=Depends(db)):

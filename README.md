@@ -6,9 +6,11 @@ I use it for my own search. The code is public; my data isn't. It lives only in 
 
 ## What it does
 
-- **Pipeline at a glance:** counts by stage, a funnel, and a "Needs attention" list (overdue next steps, applications quiet for 10+ days, anything the email sync couldn't decide).
-- **Update from anywhere:** change status (Drafting → Applied → Recruiter screen → Interviewing → Offer, or Rejected / Withdrawn / Ghosted / Hired), set the next step, record why something closed, and add notes. Status changes and notes land on the timeline.
-- **Closed applications, filterable** by outcome and time window, and searchable along with everything else (including notes).
+- **Where things stand:** a stage strip and the active applications grouped by stage, with a right-hand rail for **Today** (overdue next steps, applications quiet for 10+ days, anything the email sync couldn't decide, with one-click Done / Snooze / Followed up / Ghosted), **Since you last looked** (what agents changed since you last marked it seen), and **Coming up**.
+- **Flow chart:** a Sankey diagram of how applications moved through the stages to their outcomes, filterable by date, source and more, downloadable as PNG or SVG. It only draws stages with recorded evidence, so skipped stages stay skipped and imported rows with just an outcome show as "Stage not recorded".
+- **Update fast:** change status from the badge on any row (Drafting → Applied → Recruiter screen → Interviewing → Offer, or Rejected / Withdrawn / Ghosted / Hired), and edit everything else inline in a side drawer: next step with a date picker, comp, source, posting link, fit, notes. Status changes and notes land on the timeline. Keyboard shortcuts for all of it (press `?`).
+- **Your look, synced:** an Appearance panel with five themes and control over every color (light and dark), font, size, density, corner radius and badge style, with a contrast check. Settings sync through the server, separately for computers and phones.
+- **Archive:** closed applications and old history rows, filterable by outcome and time window, and searchable along with everything else (including notes).
 - **Live:** the page notices changes made elsewhere (another device, or an agent) within 30 seconds.
 - **Documents in the app:** each application shows its resume and cover letter as **PDF** and **Word** buttons. PDFs open in a built-in viewer (PDF.js, so it works the same on phones), read live from the private documents repo on GitHub. Without a docs token configured, the buttons link to GitHub instead.
 - **Agent-friendly API:** bearer-token access, and every write records who made it (`dashboard`, `claude`, ...).
@@ -23,7 +25,7 @@ GitHub Actions: tests on every push; on main, deploy over SSH with a forced-comm
 ```
 
 - **Backend:** Python, FastAPI, SQLite. No ORM; the schema is three tables (`app/db.py`). One connection per request, WAL mode, and `BEGIN IMMEDIATE` writes, so overlapping writes (an agent syncing while you edit on your phone) queue up instead of colliding. There's a test for exactly that.
-- **Front end:** one HTML page, one stylesheet, one script. No build step. PDF.js 4.10.38 (Apache-2.0) is vendored in `app/static/vendor/pdfjs` and loaded only when a PDF is opened.
+- **Front end:** one HTML page and plain ES modules, no build step and no dependencies. `tokens.css` holds every color, size and spacing value as a CSS variable (the Appearance panel overrides them); `app.css` has the shared primitives; `js/core/` is the data layer (API client, model, polling, change tracking, every write) and `js/ui/` has one module per surface (list, rail, drawer, status menu, quick add, PDF viewer, flow chart, appearance, shortcuts). PDF.js 4.10.38 (Apache-2.0) is vendored in `app/static/vendor/pdfjs` and loaded only when a PDF is opened.
 - **Rules live in one place** (`app/tracker.py`): moving between in-progress and closed, stamping outcome dates, keeping the timeline, all-or-nothing imports.
 
 ### Security model
@@ -48,6 +50,8 @@ GitHub Actions: tests on every push; on main, deploy over SSH with a forced-comm
 | POST | `/api/applications/{id}/events` | Add a timeline entry or note |
 | DELETE | `/api/applications/{id}/events/{eid}` | Delete a note |
 | PUT | `/api/inbox` | Record an email sync: `checked` date and `review` items |
+| GET | `/api/prefs` | Appearance settings: `{desktop, mobile}` |
+| PUT | `/api/prefs/{desktop\|mobile}` | Save one device class's settings (`{prefs: {...}}`, a JSON object under 16 KB) |
 | GET | `/api/export` | Full JSON backup |
 | POST | `/api/import` | Replace everything from an export (token only) |
 

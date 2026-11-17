@@ -179,6 +179,83 @@ def test_dashboard_version_changes_on_write(seeded):
     assert seeded.get("/api/dashboard").json()["version"] != v1
 
 
+def test_prefs_sync_per_device_class(seeded):
+    assert seeded.get("/api/dashboard").json()["prefs"] == {"desktop": None, "mobile": None}
+    v1 = seeded.get("/api/dashboard").json()["version"]
+    r = seeded.put("/api/prefs/desktop", json={"prefs": {"preset": "graphite", "mode": "dark"}}, headers=H)
+    assert r.status_code == 200
+    d = seeded.get("/api/dashboard").json()
+    assert d["prefs"] == {"desktop": {"preset": "graphite", "mode": "dark"}, "mobile": None}
+    assert d["version"] != v1   # other open devices notice on their next poll
+    seeded.put("/api/prefs/mobile", json={"prefs": {"preset": "paper"}}, headers=H)
+    assert seeded.get("/api/prefs").json() == {"desktop": {"preset": "graphite", "mode": "dark"}, "mobile": {"preset": "paper"}}
+
+
+def test_prefs_validation(seeded):
+    assert seeded.put("/api/prefs/desktop", json={"prefs": {"a": 1}}).status_code == 403   # browser write needs CSRF header
+    assert seeded.put("/api/prefs/tablet", json={"prefs": {}}, headers=H).status_code == 422
+    assert seeded.put("/api/prefs/desktop", json={"prefs": "dark"}, headers=H).status_code == 422
+    assert seeded.put("/api/prefs/desktop", json={"prefs": {"x": "y" * 20000}}, headers=H).status_code == 422
+
+
+def test_import_keeps_prefs_unless_given(seeded):
+    seeded.put("/api/prefs/desktop", json={"prefs": {"preset": "graphite"}}, headers=H)
+    export = seeded.get("/api/export").json()
+    assert export["meta"]["prefs"]["desktop"] == {"preset": "graphite"}
+    export["meta"].pop("prefs")
+    assert seeded.post("/api/import", json=export, headers=AUTH).status_code == 200
+    assert seeded.get("/api/prefs").json()["desktop"] == {"preset": "graphite"}
+
+
+def _path(kind, timeline, stage=""):
+    from app.tracker import path_of
+    tl = [{"text": t, "kind": k} for k, t in timeline]
+    return path_of({"kind": kind, "stage": stage, "timeline": tl})
+
+
+def test_path_skipped_stage_stays_skipped():
+    p = _path("closed", [("status", "Added as Applied"), ("status", "Status: Applied → Interviewing"),
+                         ("status", "Status: Interviewing → Offer"), ("status", "Status: Offer → Hired")])
+    assert p == {"reached": ["Applied", "Interviewing", "Offer"], "exitKnown": True}
+
+
+def test_path_closed_without_evidence():
+    assert _path("closed", []) == {"reached": [], "exitKnown": False}
+    # free text about the stage counts as evidence of reaching it, not of where it closed
+    assert _path("closed", [("timeline", "Applied (Gmail)")]) == {"reached": ["Applied"], "exitKnown": False}
+
+
+def test_path_reopened_then_closed_again():
+    p = _path("closed", [("status", "Status: Applied → Rejected"), ("status", "Status: Rejected → Recruiter screen"),
+                         ("status", "Status: Recruiter screen → Ghosted")])
+    assert p == {"reached": ["Applied", "Recruiter screen"], "exitKnown": True}
+    p = _path("active", [("status", "Status: Applied → Rejected"), ("status", "Status: Rejected → Applied")], stage="Applied")
+    assert p == {"reached": ["Applied"], "exitKnown": False}
+
+
+def test_path_history_and_text_rules():
+    # leaving History gives no stage; a word that only begins like a stage doesn't count
+    assert _path("closed", [("status", "Status: History → Rejected")]) == {"reached": [], "exitKnown": False}
+    assert _path("history", [("timeline", "Offered a coffee chat"), ("note", "Interview prep notes")]) == {"reached": [], "exitKnown": False}
+    assert _path("active", [("note", "Recruiter screen went well")], stage="Interviewing")["reached"] == ["Recruiter screen", "Interviewing"]
+
+
+def test_dashboard_carries_paths(seeded):
+    d = seeded.get("/api/dashboard").json()
+    ridgeway = next(a for a in d["closed"] if a["company"] == "Ridgeway Software")
+    assert ridgeway["path"] == {"reached": ["Applied", "Interviewing", "Offer"], "exitKnown": True}
+    tidewater = next(a for a in d["closed"] if a["company"] == "Tidewater Co.")
+    assert tidewater["path"] == {"reached": [], "exitKnown": False}
+
+
+def test_static_modules_revalidate(client):
+    """After a deploy, browsers must not mix a new page with old cached modules."""
+    for path in ("/static/app.js", "/static/js/core/state.js", "/static/tokens.css"):
+        r = client.get(path)
+        assert r.status_code == 200 and r.headers["cache-control"] == "no-cache", path
+    assert "max-age" in client.get("/static/vendor/pdfjs/pdf.min.js").headers["cache-control"]
+
+
 def test_index_and_static_served(client):
     assert client.get("/").status_code == 200
     assert client.get("/static/app.js").status_code == 200

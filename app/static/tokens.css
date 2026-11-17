@@ -1,0 +1,130 @@
+/* Design tokens. Every component reads these and nothing else: no raw hex,
+   no px font sizes or spacing in component CSS. The theme customizer
+   (js/ui/prefs.js) overrides any of them from a <style id="jt-theme"> that is
+   injected after this file, so the defaults below are the "Default" theme. */
+
+:root {
+  /* ---- Type ---- */
+  --font-ui: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --fs-base: 14px;                               /* customizer: 12 to 18 */
+  --fs-2xs: calc(var(--fs-base) * 0.75);         /* 10.5 */
+  --fs-xs: calc(var(--fs-base) * 0.8125);        /* 11.4 */
+  --fs-sm: calc(var(--fs-base) * 0.875);         /* 12.25 */
+  --fs-md: calc(var(--fs-base) * 0.9375);        /* 13.1 */
+  --fs-lg: calc(var(--fs-base) * 1.0715);        /* 15 */
+  --fs-xl: calc(var(--fs-base) * 1.286);         /* 18 */
+  --fs-2xl: calc(var(--fs-base) * 1.6);          /* 22.4 */
+  --lh: 1.45;
+  --lh-tight: 1.2;
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 650;
+  --tracking-caps: 0.05em;
+
+  /* ---- Space (density) ----
+     One unit drives all spacing. Compact 3px, comfortable 4px, spacious 5px. */
+  --space: 4px;
+  --sp-1: var(--space);
+  --sp-2: calc(var(--space) * 2);
+  --sp-3: calc(var(--space) * 3);
+  --sp-4: calc(var(--space) * 4);
+  --sp-5: calc(var(--space) * 5);
+  --sp-6: calc(var(--space) * 6);
+  --sp-8: calc(var(--space) * 8);
+  --sp-10: calc(var(--space) * 10);
+  --sp-12: calc(var(--space) * 12);
+  --row-pad-y: calc(var(--space) * 2.25);       /* list row vertical padding */
+  --control-h: calc(var(--fs-base) * 2.3);      /* buttons, inputs */
+
+  /* ---- Shape ---- */
+  --radius: 8px;                                 /* customizer: 0 to 14 */
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-lg: calc(var(--radius) * 1.5);
+  --radius-pill: 999px;
+  --border-w: 1px;
+
+  /* ---- Motion ---- */
+  --dur-fast: 120ms;
+  --dur: 180ms;
+  --dur-slow: 260ms;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  /* ---- Layout ---- */
+  --content-max: 1360px;
+  --rail-w: 340px;
+  --drawer-w: 540px;
+  --gutter: var(--sp-6);
+  --z-pop: 30;
+  --z-drawer: 40;
+  --z-dialog: 50;
+  --z-toast: 60;
+
+  /* ---- Color: light (Default theme = the original tracker palette) ---- */
+  color-scheme: light;
+  --page: #f9f9f7;
+  --surface: #fcfcfb;
+  --raised: #ffffff;
+  --hover: rgba(11, 11, 11, 0.04);
+  --ink: #0b0b0b;
+  --ink-2: #52514e;
+  --muted: #6b6a65;
+  --grid: #e1e0d9;
+  --axis: #c3c2b7;
+  --border: rgba(11, 11, 11, 0.10);
+  --accent: #2f6b69;
+  --accent-bg: #eaf4f4;
+  --on-accent: #ffffff;
+  --brand: #3a7d7b;
+  --focus: #2f6b69;
+  /* stage colors, Drafting to Offer */
+  --s1: #86b6ef; --s2: #5598e7; --s3: #2a78d6; --s4: #1c5cab; --s5: #104281;
+  --warn: #fab219; --warn-ink: #8a5a00; --warn-bg: #fdf3dc;
+  --serious: #ec835a;
+  --critical: #d03b3b; --critical-ink: #b42323; --critical-bg: #fbeaea;
+  --good: #0ca30c; --good-ink: #006300; --good-bg: #e6f5e6;
+  --on-warn: #0b0b0b;
+  --scrim: rgba(0, 0, 0, 0.35);
+  --shadow-pop: 0 8px 28px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-drawer: -12px 0 40px rgba(0, 0, 0, 0.12);
+  --shadow-dialog: 0 20px 60px rgba(0, 0, 0, 0.25);
+  --doc-paper: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --raised: #222220; --hover: rgba(255, 255, 255, 0.05);
+    --ink: #f0efec; --ink-2: #c3c2b7; --muted: #9a988f;
+    --grid: #2c2c2a; --axis: #383835; --border: rgba(255, 255, 255, 0.10);
+    --accent: #6cc0bc; --accent-bg: #1d3433; --on-accent: #0d0d0d; --brand: #6cc0bc; --focus: #6cc0bc;
+    --s1: #184f95; --s2: #256abf; --s3: #3987e5; --s4: #6da7ec; --s5: #9ec5f4;
+    --warn-ink: #f5c55a; --warn-bg: #3a2e12;
+    --critical-ink: #f08a8a; --critical-bg: #3a1a1a;
+    --good-ink: #4cc84c; --good-bg: #16301a;
+    --scrim: rgba(0, 0, 0, 0.55);
+    --shadow-pop: 0 8px 28px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.3);
+    --shadow-drawer: -12px 0 40px rgba(0, 0, 0, 0.5);
+    --shadow-dialog: 0 20px 60px rgba(0, 0, 0, 0.6);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0d0d0d; --surface: #1a1a19; --raised: #222220; --hover: rgba(255, 255, 255, 0.05);
+  --ink: #f0efec; --ink-2: #c3c2b7; --muted: #9a988f;
+  --grid: #2c2c2a; --axis: #383835; --border: rgba(255, 255, 255, 0.10);
+  --accent: #6cc0bc; --accent-bg: #1d3433; --on-accent: #0d0d0d; --brand: #6cc0bc; --focus: #6cc0bc;
+  --s1: #184f95; --s2: #256abf; --s3: #3987e5; --s4: #6da7ec; --s5: #9ec5f4;
+  --warn-ink: #f5c55a; --warn-bg: #3a2e12;
+  --critical-ink: #f08a8a; --critical-bg: #3a1a1a;
+  --good-ink: #4cc84c; --good-bg: #16301a;
+  --scrim: rgba(0, 0, 0, 0.55);
+  --shadow-pop: 0 8px 28px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-drawer: -12px 0 40px rgba(0, 0, 0, 0.5);
+  --shadow-dialog: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --dur-fast: 0ms; --dur: 0ms; --dur-slow: 0ms; }
+}

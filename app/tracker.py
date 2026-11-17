@@ -17,7 +17,11 @@ from .docs import enabled as docs_enabled
 STAGES = ["Drafting", "Applied", "Recruiter screen", "Interviewing", "Offer"]
 OUTCOMES = ["Rejected", "Withdrawn", "Ghosted", "Hired"]
 DATE_RE = re.compile(r"\d{4}-\d{2}-\d{2}")
+STATUS_EVENT_RE = re.compile(r"^Status:\s*(.+?)\s*→\s*(.+?)\s*$")
+ADDED_EVENT_RE = re.compile(r"^Added as\s+(.+?)\s*$")
 FIELDS = ["found", "company", "role", "comp", "source", "next_step", "lesson", "folder", "posting_url", "verdict"]
+PREF_SLOTS = ("desktop", "mobile")   # appearance settings sync per device class
+PREFS_MAX_BYTES = 16_000
 
 
 class NotFound(Exception):
@@ -75,6 +79,47 @@ def to_dict(conn, row: sqlite3.Row) -> dict:
     return d
 
 
+def _starts_with_stage(text: str) -> str:
+    """'Recruiter screen; asked for times' -> 'Recruiter screen'. Whole words only."""
+    low = text.lower()
+    for st in STAGES:
+        if low.startswith(st.lower()) and (len(low) == len(st) or not low[len(st)].isalpha()):
+            return st
+    return ""
+
+
+def path_of(app: dict) -> dict:
+    """Which in-progress stages an application is known to have reached, for the
+    flow chart. Only recorded evidence counts, so the chart never shows a flow
+    that didn't happen:
+      - status events: "Added as X" and both ends of "Status: X → Y"
+      - timeline or note text that starts with a stage name ("Recruiter screen; ...")
+      - the current stage of an active application
+    Skipped stages stay skipped (Applied → Interviewing doesn't imply a screen).
+    exitKnown: for a closed application, whether a status event records the
+    stage it closed from. Imported rows usually only say "Rejected (date)"."""
+    reached, exit_known = set(), False
+    for t in app["timeline"]:
+        text = (t["text"] or "").strip()
+        m = STATUS_EVENT_RE.match(text) if t["kind"] == "status" else None
+        a = ADDED_EVENT_RE.match(text) if t["kind"] == "status" else None
+        if m:
+            src, dst = m.group(1), m.group(2)
+            reached.update(x for x in (src, dst) if x in STAGES)
+            if dst in OUTCOMES:
+                exit_known = src in STAGES
+            elif dst in STAGES:
+                exit_known = False          # reopened; a later close decides again
+        elif a:
+            if a.group(1) in STAGES:
+                reached.add(a.group(1))
+        elif st := _starts_with_stage(text):
+            reached.add(st)
+    if app["kind"] == "active" and app.get("stage") in STAGES:
+        reached.add(app["stage"])
+    return {"reached": [s for s in STAGES if s in reached], "exitKnown": app["kind"] == "closed" and exit_known}
+
+
 def get_application(conn, app_id: int) -> dict:
     return to_dict(conn, _row(conn, app_id))
 
@@ -96,6 +141,7 @@ def dashboard(conn, settings) -> dict:
             "next": a["next_step"], "nextDate": (DATE_RE.findall(a["next_step"]) or [""])[0],
             "lesson": a["lesson"], "folder": a["folder"], "url": a["posting_url"], "verdict": a["verdict"],
             "files": a["files"], "timeline": a["timeline"], "lastActivity": max(dates) if dates else "",
+            "path": path_of(a),
         }
     apps = [shape(a) for a in list_applications(conn)]
     return {
@@ -109,6 +155,7 @@ def dashboard(conn, settings) -> dict:
         "outcomes": OUTCOMES,
         "inboxChecked": get_meta(conn, "inbox_checked", ""),
         "inboxReview": get_meta(conn, "inbox_review", []),
+        "prefs": get_prefs(conn),
         "active": [a for a in apps if a["kind"] == "active"],
         "closed": [a for a in apps if a["kind"] == "closed"],
         "history": [a for a in apps if a["kind"] == "history"],
@@ -240,6 +287,25 @@ def set_inbox(conn, checked: str | None, review: list[str] | None) -> dict:
     return {"inboxChecked": get_meta(conn, "inbox_checked", ""), "inboxReview": get_meta(conn, "inbox_review", [])}
 
 
+def get_prefs(conn) -> dict:
+    return {slot: get_meta(conn, f"prefs_{slot}", None) for slot in PREF_SLOTS}
+
+
+def set_prefs(conn, slot: str, prefs) -> dict:
+    """Save one device class's appearance settings (an opaque JSON object the
+    front end owns). Bumps the revision so other open devices pick it up."""
+    if slot not in PREF_SLOTS:
+        raise Invalid(f"Unknown prefs slot: {slot!r}. Use one of: {', '.join(PREF_SLOTS)}")
+    if not isinstance(prefs, dict):
+        raise Invalid("prefs must be a JSON object")
+    if len(json.dumps(prefs)) > PREFS_MAX_BYTES:
+        raise Invalid(f"prefs are too large (limit {PREFS_MAX_BYTES} bytes)")
+    with transaction(conn):
+        set_meta(conn, f"prefs_{slot}", prefs)
+        _bump(conn)
+    return {"slot": slot, "prefs": prefs}
+
+
 # ---------- import / export ----------
 
 def export_all(conn) -> dict:
@@ -248,7 +314,8 @@ def export_all(conn) -> dict:
         "applications": [
             {k: v for k, v in a.items() if k not in ("stage",)} for a in list_applications(conn)
         ],
-        "meta": {"inbox_checked": get_meta(conn, "inbox_checked", ""), "inbox_review": get_meta(conn, "inbox_review", [])},
+        "meta": {"inbox_checked": get_meta(conn, "inbox_checked", ""), "inbox_review": get_meta(conn, "inbox_review", []),
+                 "prefs": get_prefs(conn)},
     }
 
 
@@ -277,5 +344,9 @@ def import_all(conn, payload: dict) -> dict:
         meta = payload.get("meta") or {}
         set_meta(conn, "inbox_checked", meta.get("inbox_checked") or "")
         set_meta(conn, "inbox_review", meta.get("inbox_review") or [])
+        # Appearance settings aren't application data: keep them unless the payload carries them.
+        for slot, value in (meta.get("prefs") or {}).items():
+            if slot in PREF_SLOTS and (value is None or isinstance(value, dict)):
+                set_meta(conn, f"prefs_{slot}", value)
         _bump(conn)
     return {"imported": len(apps)}
