@@ -1,13 +1,23 @@
-# Pieces to merge into your Authelia configuration.yml (Authelia 4.38 or newer),
-# then restart Authelia. This is not a whole config: it assumes Authelia already
+# Pieces to merge into your Authelia configuration.yml (Authelia 4.38 or newer;
+# the droplet runs 4.39.15 in Docker), then check it with
+# `authelia validate-config` and restart Authelia. This is not a whole config: it assumes Authelia already
 # runs with its users, storage, and notifier set up.
 
-# The session cookie has to cover the tracker's domain. If your existing cookie
-# is for thezdev.com, it already does, and there's nothing to add here.
+# The session cookie has to cover the tracker's domain. On this droplet the one
+# cookie used to be for apps.thezdev.com only; it is widened to thezdev.com so a
+# single sign-in covers apps.thezdev.com and the tracker. Edit that existing
+# entry rather than adding a second one: Authelia refuses to start when two
+# cookie domains overlap (thezdev.com contains apps.thezdev.com), and every app
+# behind it goes down with it. The portal URL doesn't move; it only has to sit
+# under the cookie's domain. Renaming the cookie stops old apps.thezdev.com
+# cookies still in browsers from being sent alongside the new one and hiding it.
+# The change (and Authelia's restart) signs everyone out once.
 session:
   cookies:
-    - domain: thezdev.com
-      authelia_url: https://auth.thezdev.com   # your Authelia portal
+    - name: authelia_session_thezdev           # was authelia_session
+      domain: 'thezdev.com'                    # was 'apps.thezdev.com'
+      authelia_url: 'https://apps.thezdev.com/authelia'
+      default_redirection_url: 'https://apps.thezdev.com/files'
 
 access_control:
   default_policy: deny
@@ -16,10 +26,12 @@ access_control:
     # domain: '*.thezdev.com', or that rule decides who gets in instead.
     # Name only yourself, so other Authelia users (for your other apps) can't
     # open the tracker.
-    - domain: jobtracker.thezdev.com
+    - domain: 'jobtracker.thezdev.com'
       policy: two_factor          # one_factor for password only
       subject:
         - 'user:michael'          # your Authelia username
+    - domain: 'apps.thezdev.com'  # the existing rule, unchanged, below it
+      policy: two_factor
 
 # Agents never reach Authelia (Caddy sends bearer requests straight to the app),
 # so no bypass rule is needed for the API.

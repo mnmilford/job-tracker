@@ -17,10 +17,13 @@ jobtracker.thezdev.com {
 	# Everyone else signs in at Authelia first. Not signed in: Authelia answers
 	# with a redirect to its portal (or a 401), and the request stops here.
 	# Only requests it approves reach the app, carrying the secret the app requires.
-	# 127.0.0.1:9091 is Authelia's default listen address; use yours.
+	# This droplet's Authelia listens on 127.0.0.1:9091 under the path prefix
+	# /authelia (portal: https://apps.thezdev.com/authelia), so its endpoint is
+	# /authelia/api/authz/forward-auth. An Authelia served at its own domain's
+	# root would use /api/authz/forward-auth instead.
 	handle {
 		forward_auth 127.0.0.1:9091 {
-			uri /api/authz/forward-auth
+			uri /authelia/api/authz/forward-auth
 		}
 		reverse_proxy 127.0.0.1:8300 {
 			header_up X-Proxy-Secret {file./etc/caddy/jobtracker-proxy-secret}

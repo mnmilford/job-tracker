@@ -64,21 +64,31 @@ sudo sh -c 'umask 027; grep "^PROXY_SECRET=" /etc/job-tracker/job-tracker.env | 
 sudo chown root:caddy /etc/caddy/jobtracker-proxy-secret && sudo chmod 640 /etc/caddy/jobtracker-proxy-secret
 ```
 
-Copy the block from `deploy/Caddyfile.example` into your Caddyfile. If Authelia doesn't listen on `127.0.0.1:9091`, change the `forward_auth` address to match. Then:
+Copy the block from `deploy/Caddyfile.example` into your Caddyfile. It matches this droplet's Authelia: `127.0.0.1:9091`, served under the `/authelia` path prefix, so the endpoint is `/authelia/api/authz/forward-auth`. If yours listens elsewhere or at its own domain's root, change the address or drop the prefix. Then:
 
 ```bash
 sudo caddy validate --config /etc/caddy/Caddyfile
 sudo systemctl reload caddy
 ```
 
-Then tell Authelia who may open the tracker: merge `deploy/authelia.example.yml` into Authelia's `configuration.yml`. The access rule names only your user, so anyone else with an Authelia login (for your other apps) is turned away, and it has to sit above any broader `*.thezdev.com` rule because Authelia uses the first rule that matches. Restart Authelia afterwards (`sudo systemctl restart authelia`, or `docker restart authelia` if it runs in Docker).
+Then tell Authelia who may open the tracker: merge `deploy/authelia.example.yml` into Authelia's `configuration.yml`. Two parts:
+
+- **Cookie:** widen the *existing* session cookie to `thezdev.com` rather than adding a second one. Overlapping cookie domains make Authelia refuse to start, which takes every app behind it down. The portal stays at `https://apps.thezdev.com/authelia`. Everyone is signed out once.
+- **Access rule:** it names only your user, so anyone else with an Authelia login (for your other apps) is turned away. Keep it above any broader `*.thezdev.com` rule, because Authelia uses the first rule that matches.
+
+Check the result before restarting, so a bad config never takes Authelia down (write it as `configuration.yml.new` first):
+
+```bash
+sudo docker run --rm -v /opt/authelia:/config:ro authelia/authelia:4.39.15 authelia validate-config --config /config/configuration.yml.new
+sudo mv /opt/authelia/configuration.yml.new /opt/authelia/configuration.yml && sudo docker restart authelia
+```
 
 How long you stay signed in is up to Authelia's `session` settings. Its defaults end a session after 5 minutes idle or 1 hour total, so on a phone you'd sign in nearly every visit; ticking "Remember me" stretches that to a month (`remember_me`). When a session ends, the page shows "Signed out" and a reload takes you to the Authelia portal.
 
 Check both doors:
 
 ```bash
-curl -s -o /dev/null -w '%{http_code} %{redirect_url}\n' https://jobtracker.thezdev.com/                    # 302 to your Authelia portal
+curl -s -o /dev/null -w '%{http_code} %{redirect_url}\n' https://jobtracker.thezdev.com/                    # 302 to https://apps.thezdev.com/authelia/
 curl -s -o /dev/null -w '%{http_code}\n' -H 'Authorization: Bearer wrong' https://jobtracker.thezdev.com/api/dashboard   # 401 from the app
 curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8300/api/dashboard                                   # 401: local but no secret
 ```
