@@ -1,8 +1,8 @@
 # One-time droplet setup
 
-Target: `https://jobtracker.thezdev.com`, served by Caddy (which already handles login for your other apps), running the app as its own locked-down user. After this, every push to `main` that passes tests deploys itself.
+Target: `https://jobtracker.thezdev.com`, served by Caddy, with login handled by Authelia, running the app as its own locked-down user. After this, every push to `main` that passes tests deploys itself.
 
-Assumes Ubuntu 22.04+ (Python 3.10 or newer) with Caddy installed from the official package, running under systemd on the host (not in Docker). If your Caddy runs in a container, stop at step 5 and say so: the address it proxies to changes. Run everything as your normal sudo user unless a step says otherwise.
+Assumes Ubuntu 22.04+ (Python 3.10 or newer) with Caddy installed from the official package, running under systemd on the host (not in Docker). Authelia should already be running and reachable from Caddy (its default is `127.0.0.1:9091`). If Caddy or Authelia runs in a container, stop at step 5 and say so: the addresses Caddy talks to change. Run everything as your normal sudo user unless a step says otherwise.
 
 ## 1. DNS
 
@@ -35,7 +35,7 @@ python3 -c "import secrets; print(secrets.token_urlsafe(32))"   # run twice: one
 sudo nano /etc/job-tracker/job-tracker.env                       # PROXY_SECRET=<first>, API_TOKENS=claude:<second>
 ```
 
-- The **proxy secret** also goes to Caddy in step 5. Nobody else ever needs it.
+- The **proxy secret** also goes to Caddy in step 5. Nobody else ever needs it, Authelia included.
 - The **API token** is Claude's key. Keep it in your password manager; you'll paste it into a secure form when Claude asks for it, never into chat.
 
 ## 4. Service
@@ -55,7 +55,7 @@ sudo chmod 440 /etc/sudoers.d/job-tracker
 sudo visudo -c
 ```
 
-## 5. Caddy
+## 5. Caddy and Authelia
 
 Give Caddy the proxy secret from step 3 as a file it reads on each request. A reload picks it up, so your other sites never go down, and unlike a systemd `Environment=` line it isn't visible to other users through `systemctl show`. Write it with no trailing newline:
 
@@ -64,23 +64,26 @@ sudo sh -c 'umask 027; grep "^PROXY_SECRET=" /etc/job-tracker/job-tracker.env | 
 sudo chown root:caddy /etc/caddy/jobtracker-proxy-secret && sudo chmod 640 /etc/caddy/jobtracker-proxy-secret
 ```
 
-Copy the block from `deploy/Caddyfile.example` into your Caddyfile, and put the same login directive your other sites use inside the second `handle`. Then:
+Copy the block from `deploy/Caddyfile.example` into your Caddyfile. If Authelia doesn't listen on `127.0.0.1:9091`, change the `forward_auth` address to match. Then:
 
 ```bash
 sudo caddy validate --config /etc/caddy/Caddyfile
 sudo systemctl reload caddy
 ```
 
+Then tell Authelia who may open the tracker: merge `deploy/authelia.example.yml` into Authelia's `configuration.yml`. The access rule names only your user, so anyone else with an Authelia login (for your other apps) is turned away, and it has to sit above any broader `*.thezdev.com` rule because Authelia uses the first rule that matches. Restart Authelia afterwards (`sudo systemctl restart authelia`, or `docker restart authelia` if it runs in Docker).
+
+How long you stay signed in is up to Authelia's `session` settings. Its defaults end a session after 5 minutes idle or 1 hour total, so on a phone you'd sign in nearly every visit; ticking "Remember me" stretches that to a month (`remember_me`). When a session ends, the page shows "Signed out" and a reload takes you to the Authelia portal.
+
 Check both doors:
 
 ```bash
-curl -s -o /dev/null -w '%{http_code}\n' https://jobtracker.thezdev.com/                                   # 401 or a login redirect
+curl -s -o /dev/null -w '%{http_code} %{redirect_url}\n' https://jobtracker.thezdev.com/                    # 302 to your Authelia portal
 curl -s -o /dev/null -w '%{http_code}\n' -H 'Authorization: Bearer wrong' https://jobtracker.thezdev.com/api/dashboard   # 401 from the app
 curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8300/api/dashboard                                   # 401: local but no secret
-curl -s -o /dev/null -w '%{http_code}\n' -u michael https://jobtracker.thezdev.com/api/dashboard                  # 200 after the password prompt (basic_auth): login + secret work end to end
 ```
 
-Then open it in a browser and sign in. It'll be empty until step 7.
+Then open it in a browser: you should land on the Authelia portal, and after signing in, back on the tracker. That proves the login and the secret work end to end. It'll be empty until step 7.
 
 ## 6. Automatic deploys (GitHub Actions)
 

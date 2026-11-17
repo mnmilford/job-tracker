@@ -1,0 +1,25 @@
+# Pieces to merge into your Authelia configuration.yml (Authelia 4.38 or newer),
+# then restart Authelia. This is not a whole config: it assumes Authelia already
+# runs with its users, storage, and notifier set up.
+
+# The session cookie has to cover the tracker's domain. If your existing cookie
+# is for thezdev.com, it already does, and there's nothing to add here.
+session:
+  cookies:
+    - domain: thezdev.com
+      authelia_url: https://auth.thezdev.com   # your Authelia portal
+
+access_control:
+  default_policy: deny
+  rules:
+    # First match wins: put this ABOVE any broader rule such as
+    # domain: '*.thezdev.com', or that rule decides who gets in instead.
+    # Name only yourself, so other Authelia users (for your other apps) can't
+    # open the tracker.
+    - domain: jobtracker.thezdev.com
+      policy: two_factor          # one_factor for password only
+      subject:
+        - 'user:michael'          # your Authelia username
+
+# Agents never reach Authelia (Caddy sends bearer requests straight to the app),
+# so no bypass rule is needed for the API.

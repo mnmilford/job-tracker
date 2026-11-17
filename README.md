@@ -16,8 +16,9 @@ I use it for my own search. The code is public; my data isn't. It lives only in 
 ## How it's built
 
 ```
-Browser ──HTTPS──> Caddy (TLS + login, adds proxy secret) ──> uvicorn/FastAPI on 127.0.0.1 ──> SQLite (WAL)
-Claude  ──HTTPS + Bearer token──> Caddy (skips login for bearer requests) ──┘   (app checks the token)
+Browser ──HTTPS──> Caddy (TLS; asks Authelia, then adds proxy secret) ──> uvicorn/FastAPI on 127.0.0.1 ──> SQLite (WAL)
+                     └─forward_auth─> Authelia (login)
+Claude  ──HTTPS + Bearer token──> Caddy (skips Authelia for bearer requests) ──┘   (app checks the token)
 GitHub Actions: tests on every push; on main, deploy over SSH with a forced-command key
 ```
 
@@ -28,8 +29,8 @@ GitHub Actions: tests on every push; on main, deploy over SSH with a forced-comm
 ### Security model
 
 - The app listens on `127.0.0.1` only and runs as its own unprivileged user under a hardened systemd unit.
-- **Browsers** authenticate at the reverse proxy, which then adds a shared secret header (after stripping any copy the client sent). Token-less requests without that secret are refused, so other processes on the server, or an accidentally exposed port, get nothing.
-- **Agents** send a bearer token (32+ chars, compared in constant time). The proxy lets bearer requests skip its login, and the app rejects any token it doesn't know.
+- **Browsers** sign in at Authelia. Caddy checks every browser request with Authelia (`forward_auth`) and, only for approved ones, adds a shared secret header (after stripping any copy the client sent). Authelia's access rule names the one user allowed in. Token-less requests without that secret are refused, so other processes on the server, or an accidentally exposed port, get nothing.
+- **Agents** send a bearer token (32+ chars, compared in constant time). Caddy sends bearer requests straight to the app without asking Authelia, and the app rejects any token it doesn't know.
 - **CSRF:** browser writes must carry `X-Requested-With: job-tracker`. Cross-site forms can't set it, and cross-site scripts would need a CORS preflight the app never grants.
 - **Import** (replace everything) is token-only.
 - **Documents:** the server reads them from GitHub with a fine-grained token limited to Contents: read on the one docs repo, and only serves files an application lists, inside its own folder, as PDF or Word. Nothing is cached or stored.
@@ -62,4 +63,4 @@ DEMO_MODE=1 .venv/bin/uvicorn app.main:app --reload --port 8300   # http://127.0
 
 ## Deploy
 
-See [`deploy/SETUP.md`](deploy/SETUP.md): one-time droplet setup (user, systemd, Caddy, deploy key), then pushes to `main` deploy themselves after the tests pass.
+See [`deploy/SETUP.md`](deploy/SETUP.md): one-time droplet setup (user, systemd, Caddy and Authelia, deploy key), then pushes to `main` deploy themselves after the tests pass.

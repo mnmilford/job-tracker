@@ -28,17 +28,25 @@
   };
 
   // ---- API ----
+  // When the login session ends, the proxy (Authelia) answers with a redirect to
+  // its portal on another domain, or a 401. A fetch can't follow that redirect,
+  // so stop at it ("manual") and report it as signed out, not as offline.
+  const SIGNED_OUT = "Signed out. Reload the page to sign in again.";
+  class SignedOut extends Error { constructor() { super(SIGNED_OUT); } }
+  const signedOut = (res) => res.type === "opaqueredirect" || res.status === 401;
+
   async function api(method, path, body) {
     const res = await fetch(path, {
       method,
-      headers: { "Content-Type": "application/json", "X-Requested-With": "job-tracker" },
+      headers: { "Content-Type": "application/json", Accept: "application/json", "X-Requested-With": "job-tracker" },
       body: body === undefined ? undefined : JSON.stringify(body),
       credentials: "same-origin",
+      redirect: "manual",
     });
+    if (signedOut(res)) throw new SignedOut();
     if (!res.ok) {
       let msg = `${res.status} ${res.statusText}`;
       try { const j = await res.json(); if (j.detail) msg = typeof j.detail === "string" ? j.detail : JSON.stringify(j.detail); } catch {}
-      if (res.status === 401) msg = "Signed out. Reload the page to sign in again.";
       throw new Error(msg);
     }
     return res.json();
@@ -361,7 +369,8 @@
     msg.textContent = "Loading from GitHub…";
     if (!pdfDlg.open) pdfDlg.showModal();
     try {
-      const res = await fetch(url, { credentials: "same-origin" });
+      const res = await fetch(url, { credentials: "same-origin", redirect: "manual" });
+      if (signedOut(res)) throw new SignedOut();
       if (!res.ok) {
         let detail = "";
         try { detail = (await res.json()).detail; } catch {}
@@ -406,10 +415,10 @@
     render();
     return true;
   }
-  const setLive = (ok) => { const el = $("live"); if (el) { el.classList.toggle("off", !ok); el.lastChild.textContent = ok ? "Live" : "Offline"; } };
+  const setLive = (ok, label) => { const el = $("live"); if (el) { el.classList.toggle("off", !ok); el.lastChild.textContent = label || (ok ? "Live" : "Offline"); } };
   async function poll() {
     if (document.hidden || dlg.open) return;
-    try { await load(); setLive(true); } catch { setLive(false); }
+    try { await load(); setLive(true); } catch (err) { setLive(false, err instanceof SignedOut ? "Signed out" : ""); }
   }
   load().then(() => { const s = view; if (s.scroll) scrollTo(0, s.scroll); }).catch((err) => {
     $("sub").textContent = "Couldn't load: " + err.message;

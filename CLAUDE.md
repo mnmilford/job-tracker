@@ -12,7 +12,7 @@ Self-hosted job-application tracker (FastAPI + SQLite + one static page). Public
 
 ## Auth model (don't weaken it)
 
-Browsers log in at Caddy, which injects `X-Proxy-Secret`; token-less requests without it get 401. Agents use `Authorization: Bearer`. Browser writes need `X-Requested-With: job-tracker`. Import is token-only. One SQLite connection per request (never share one across threads). See README "Security model".
+Browsers log in at Authelia; Caddy checks each request with it (`forward_auth`) and injects `X-Proxy-Secret` only on approved ones, and bearer requests skip Authelia; token-less requests without it get 401. Agents use `Authorization: Bearer`. Browser writes need `X-Requested-With: job-tracker`. Import is token-only. One SQLite connection per request (never share one across threads). See README "Security model".
 
 ## Commands
 

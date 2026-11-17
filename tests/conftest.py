@@ -22,7 +22,7 @@ def make(tmp_path, **kw):
     s.owner_name = "Test"
     for k, v in kw.items():
         setattr(s, k, v)
-    # By default the client behaves like a browser that came through Caddy's login.
+    # By default the client behaves like a browser that came through the Authelia login.
     return TestClient(create_app(s), headers={"X-Proxy-Secret": SECRET})
 
 

@@ -1,24 +1,27 @@
 # Add to your Caddyfile, then: sudo systemctl reload caddy
-# Reads the proxy secret from /etc/caddy/jobtracker-proxy-secret (deploy/SETUP.md, step 5).
+# Login is Authelia's (deploy/authelia.example.yml); Caddy asks it about every
+# browser request with forward_auth. Reads the proxy secret from
+# /etc/caddy/jobtracker-proxy-secret (deploy/SETUP.md, step 5).
 jobtracker.thezdev.com {
 	# Never pass along a secret header a client tried to send itself.
 	request_header -X-Proxy-Secret
 
-	# Agents (Claude) send "Authorization: Bearer <token>". They skip the login
-	# below; the app checks the token itself and rejects anything else.
+	# Agents (Claude) send "Authorization: Bearer <token>". They skip Authelia;
+	# the app checks the token itself and rejects anything else. (Authelia would
+	# also try to read that header as one of its own tokens and refuse it.)
 	@agent header Authorization "Bearer *"
 	handle @agent {
 		reverse_proxy 127.0.0.1:8300
 	}
 
-	# Everyone else signs in first. Give this site its own login; don't import a
-	# snippet shared with other apps, or their users get in here too:
-	#   basic_auth {
-	#       michael <hash from: caddy hash-password>
-	#   }
-	# Only requests that got past it carry the secret the app requires.
+	# Everyone else signs in at Authelia first. Not signed in: Authelia answers
+	# with a redirect to its portal (or a 401), and the request stops here.
+	# Only requests it approves reach the app, carrying the secret the app requires.
+	# 127.0.0.1:9091 is Authelia's default listen address; use yours.
 	handle {
-		# <your login directive here>
+		forward_auth 127.0.0.1:9091 {
+			uri /api/authz/forward-auth
+		}
 		reverse_proxy 127.0.0.1:8300 {
 			header_up X-Proxy-Secret {file./etc/caddy/jobtracker-proxy-secret}
 		}

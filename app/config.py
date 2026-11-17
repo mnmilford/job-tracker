@@ -1,13 +1,13 @@
 """Settings, all from environment variables (see deploy/job-tracker.env.example).
 
 Auth model (AUTH_MODE=proxy, the default):
-  - Browsers sign in at the reverse proxy (Caddy). Caddy then adds
-    "X-Proxy-Secret: <PROXY_SECRET>" to the request (after stripping any copy the
-    client sent). The app accepts token-less requests only with that secret, so
-    other processes on the server, or anything that reaches the port directly,
-    get nothing.
-  - Agents (Claude) send "Authorization: Bearer <token>". Caddy lets those
-    through without its login, and the app checks the token itself.
+  - Browsers sign in at Authelia. Caddy checks each request with Authelia
+    (forward_auth) and, once it's approved, adds "X-Proxy-Secret: <PROXY_SECRET>"
+    to the request (after stripping any copy the client sent). The app accepts
+    token-less requests only with that secret, so other processes on the server,
+    or anything that reaches the port directly, get nothing.
+  - Agents (Claude) send "Authorization: Bearer <token>". Caddy sends those
+    straight here without asking Authelia, and the app checks the token itself.
 DEMO_MODE=1 serves seeded fake data with no auth, for the public portfolio demo.
 """
 import os

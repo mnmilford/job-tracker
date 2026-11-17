@@ -24,7 +24,7 @@ def test_good_token_reads(seeded):
 
 
 def test_tokenless_needs_proxy_secret(tmp_path):
-    """Only requests that passed Caddy's login carry the secret. Local processes don't get a pass."""
+    """Only requests Authelia approved carry the secret Caddy adds. Local processes don't get a pass."""
     bare = make(tmp_path)
     bare.headers.pop("X-Proxy-Secret")
     assert bare.get("/api/dashboard").status_code == 401
